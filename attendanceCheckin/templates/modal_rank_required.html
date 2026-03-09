@@ -1,0 +1,47 @@
+<dialog id="modal_rank_required" class="modal">
+    <div class="modal-box">
+
+        <hr>
+        <h3 id="studentHeader"   class="font-bold text-lg mb-2 mt-2 text-center">Hello - {{form.student_name}}</h3>
+        <h3 id="studentGreeting" class="font-bold text-lg mb-2 mt-2 text-center">Please enter your current rank.</h3>
+        <hr>
+
+        <form hx-post="{% url 'update_required_rank' %}"
+            class="mb-4">
+            {% csrf_token %}
+            {{ form.badge_number}}
+            <div id="div_required_ranks" class="form-control w-full">
+                <label class="label">
+                    <span class="label-text font-bold">Your current rank</span>
+                    {{ form.required_ranks}}
+                </label>
+            </div>
+
+            {% include 'belt_stripes.html' %}
+
+            <div class="modal-action">
+                <button type="reset" class="btn" onclick="clearAllRankRequiredInputs(); modal_rank_required.close()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </div>
+
+            <div class="text-center">
+                <span id="rank_update_message" class="text-success font-bold text-lg">Rank update message</span>
+            </div>
+
+        </form>
+    </div>
+</dialog>
+
+<script>
+    function clearAllRankRequiredInputs() {
+        console.log(`clearAllRankRequiredInputs`);
+        var inputs = document.querySelectorAll('#contact_modal input');
+        inputs.forEach(function(input) {
+            input.value = '';
+        });
+        document.getElementById('badgeNumber').disabled = false;
+        document.getElementById('checkinMessage').innerHTML = "";
+        document.getElementById('promotionMessage').innerHTML = "";
+        document.getElementById('otherMessage').innerHTML = "";
+    }
+</script>

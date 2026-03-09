@@ -1,0 +1,215 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rising Sun Class Checkin</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.22/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <link href="{% static 'checkin.css' %}" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+    <meta name="csrf-token" content="{{ csrf_token }}">
+</head>
+<body class="">
+
+<script src="{% static 'display_crntdate.js' %}"></script>
+
+{% include 'modal_rank_required.html' %}
+
+<div id="modal-form-container">
+    <!-- The form will be loaded here -->
+</div>
+<div class="grid grid-cols-1 mt-16 mb-8">
+
+    <div class="m-auto">
+        <img src="{% static 'rising-sun-martial-arts-logo.jpg' %}"
+             alt="Checkin Image"
+             class="banner object-center"
+             width="800"/>
+    </div>
+</div>
+
+
+<form class="w-3/5 checkin_main mx-auto m-5 p-8 rounded-lg"
+      hx-post="{% url 'badge_checkin' %}">
+    {% csrf_token %}
+    <div class="flex justify-center rounded-lg p-4">
+        <h3 class="font-bold text-3xl  rounded-lg pt-4 pb-1">
+            Please checkin before starting class...
+        </h3>
+    </div>
+    <div class="flex justify-center mt-2">
+        <input
+                type="text"
+                id="badgeNumber"
+                name="badgeNumber"
+                class=" w-1/4 p-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
+        />
+    </div>
+    <div class="flex text-center justify-center mt-4">
+        <label id="currentDateTime" class="font-bold text-xl w-1/2 text-gray-700">
+            Today's date and time.
+        </label>
+    </div>
+
+
+    <div class="grid grid-cols-[100px_1fr] mt-4">
+        <div>
+        <button class="btn btn-sm btn-success"
+                hx-post="{% url 'show_required_ranks' %}"
+                hx-target="#modal_rank_required"
+                hx-on::after-swap="modal_rank_required.showModal()"
+                hx-swap="outerHTML">Ranks</button>
+        </div>
+        <div>
+        <label id="badgeMessage" class="font-bold text-lg">
+            Rank Message
+        </label>
+        </div>
+    </div>
+
+</form>
+
+<div class="w-3/5 checkin_main_message mx-auto m-5 p-8 rounded-lg grid grid-cols-5 gap-4">
+  <div class="col-span-1">
+    <img src="{% static 'RSM_Logo_002.jpg' %}" alt="Checkin Image" class="banner object-center" height="75"/>
+  </div>
+  <div class="col-span-4">
+    <div id="checkinMessage" class="flex mt-2 font-bold text-xl ">
+
+    </div>
+    <div id="promotionMessage" class="flex mt-4 font-bold text-xl ">
+
+    </div>
+    <div id="otherMessage" class="flex mt-4 font-bold text-xl ">
+
+    </div>
+
+  </div>
+
+
+</div>
+<script>
+    window.onload = function(){
+     console.log("Window has been loaded");
+     startDateTimerInterval();
+    };
+
+    // ---------------------------------------------------------------------------
+    // common function to reset the checkin messages section
+    // ---------------------------------------------------------------------------
+    function resetCheckinResponseMessages() {
+        console.log(`resetCheckinResponseMessages`);
+        document.getElementById('badgeNumber').disabled = false;
+        document.getElementById('checkinMessage').innerHTML = "";
+        document.getElementById('promotionMessage').innerHTML = "";
+        document.getElementById('otherMessage').innerHTML = "";
+    }
+
+    // ---------------------------------------------------------------------------
+    // respond to the 'ranks' button click
+    // ---------------------------------------------------------------------------
+    document.body.addEventListener('show_rank_required_dialog', () => {
+        console.log(`show_rank_required_dialog was activated`);
+        document.getElementById('badgeNumber').disabled = true;
+        document.getElementById('modal_rank_required').showModal();
+    });
+
+    document.body.addEventListener("rank_required_response", function(event) {
+        console.log(`rank_required_response was received`);
+        const badgeMessage     = document.getElementById('badgeMessage');
+        const badgeNumber      = document.getElementById('badgeNumber');
+        badgeMessage.innerHTML = event.detail.checkin_message;
+        if (event.detail.checkin_status === "error") {
+            badgeMessage.classList.add    ("text-error");
+            badgeMessage.classList.remove ("text-success");
+        }
+        else {
+            badgeMessage.classList.remove ("text-error");
+            badgeMessage.classList.add    ("text-success");
+        }
+        resetCheckinResponseMessages();
+        setTimeout(function() {
+            badgeMessage.innerHTML = "";
+            badgeMessage.classList.remove ("text-error");
+            badgeMessage.classList.remove ("text-success");
+            badgeNumber.value = '';
+            document.getElementById('badgeNumber').disabled = false;
+        }, 3000);
+    });
+
+<!--    document.body.addEventListener("rank_updated", function(event) {-->
+<!--        console.log(`rank_updated was received`);-->
+<!--        document.getElementById('modal_rank_required').close();-->
+<!--        document.getElementById('badgeNumber').disabled = false;-->
+<!--        const otherMessage     = document.getElementById('otherMessage');-->
+<!--        otherMessage.innerHTML = event.detail.rank_update_message;-->
+<!--        if (event.detail.rank_update_status === "error") {-->
+<!--            otherMessage.classList.add    ("text-error");-->
+<!--            otherMessage.classList.remove ("text-success");-->
+<!--        }-->
+<!--        else {-->
+<!--            otherMessage.classList.remove ("text-error");-->
+<!--            otherMessage.classList.add    ("text-success");-->
+<!--        }-->
+<!--    });-->
+
+    // ---------------------------------------------------------------------------
+    // respond to the rank_updated events
+    // ---------------------------------------------------------------------------
+    document.body.addEventListener("rank_update_response", function(event) {
+        console.log(`rank_update_response was received`);
+        document.getElementById('modal_rank_required').close();
+        document.getElementById('badgeNumber').disabled = false;
+        const badgeMessage     = document.getElementById('badgeMessage');
+        badgeMessage.innerHTML = event.detail.rank_update_message;
+        if (event.detail.rank_update_status === "error") {
+            badgeMessage.classList.add    ("text-error");
+            badgeMessage.classList.remove ("text-success");
+        }
+        else {
+            badgeMessage.classList.remove ("text-error");
+            badgeMessage.classList.add    ("text-success");
+        }
+        resetCheckinResponseMessages();
+        setTimeout(function() {
+            badgeMessage.innerHTML = "";
+            badgeMessage.classList.remove ("text-error");
+            badgeMessage.classList.remove ("text-success");
+            badgeNumber.value = '';
+            document.getElementById('badgeNumber').disabled = false;
+        }, 3000);
+    });
+
+    // ---------------------------------------------------------------------------
+    // respond to the checkin response
+    // ---------------------------------------------------------------------------
+    document.body.addEventListener("checkin_response", function(event) {
+        console.log(`checkin_response was received`);
+
+        const checkinMessage   = document.getElementById('checkinMessage');
+        const promotionMessage = document.getElementById('promotionMessage');
+        const otherMessage     = document.getElementById('otherMessage');
+
+        if (event.detail.checkin_status === "error") {
+            checkinMessage.innerHTML   = event.detail.checkin_message;
+            promotionMessage.innerHTML = "";
+            otherMessage.innerHTML     = "";
+            checkinMessage.classList.add    ("text-error");
+            checkinMessage.classList.remove ("text-success");
+        }
+        else {
+            checkinMessage.innerHTML   = event.detail.checkin_message;
+            promotionMessage.innerHTML = "";
+            otherMessage.innerHTML     = "";
+            checkinMessage.classList.add    ("text-success");
+            checkinMessage.classList.remove ("text-error");
+        }
+    });
+
+
+</script>
+</body>
+</html>

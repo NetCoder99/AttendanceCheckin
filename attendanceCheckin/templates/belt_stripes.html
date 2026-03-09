@@ -1,0 +1,14 @@
+            <div id="div_belt_stripes" class="form-control w-full">
+                <label class="label">
+                    <span class="label-text font-bold">How many stripes</span>
+                    <select id="id_required_stripes"
+                            name="required_stripes"
+                            class="select w-1/2"
+                            style="border: 1px solid #d1d1d1 !important;"
+                            aria-invalid="true" >
+                        {% for required_stripe in form.required_stripes %}
+                            <option value="{{ required_stripe.stripe_id }}">{{ required_stripe.stripe_name }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+            </div>
