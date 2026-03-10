@@ -6,8 +6,8 @@
                             class="select w-1/2"
                             style="border: 1px solid #d1d1d1 !important;"
                             aria-invalid="true" >
-                        {% for required_stripe in form.required_stripes %}
-                            <option value="{{ required_stripe.stripe_id }}">{{ required_stripe.stripe_name }}</option>
+                        {% for stripe_record in form.required_stripes %}
+                           {{ stripe_record }}
                         {% endfor %}
                     </select>
                 </label>

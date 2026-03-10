@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.urls import reverse_lazy
 
 from attendanceCheckin.models import CheckinStudentRecords
-from attendanceData.models import BeltsByRank
+from attendanceData.models import BeltsByRank, Belts
 
 
 class CheckinForm(forms.ModelForm):
@@ -33,20 +33,9 @@ class CheckinForm(forms.ModelForm):
 
 class RequiredRanks(forms.Form):
     student_name = "Luke Skywalker"
-    badge_number = forms.IntegerField(widget=forms.HiddenInput())
-    # Choices are defined as a tuple of 2-tuples: (internal_value, human_readable_name)
-    RANKS = [
-        ('1', 'White Belt'),
-        ('2', 'Orange Belt'),
-        ('3', 'Yellow Belt'),
-        ('4', 'Blue Belt'),
-        ('5', 'Green Belt'),
-        ('6', 'Purple Belt'),
-        ('7', 'Brown Belt'),
-        ('8', 'Black Belt'),
-    ]
+    badge_number = "-1"
     required_ranks = forms.ChoiceField(
-        choices=RANKS,
+        choices=[],
         widget=forms.Select(attrs={
             'hx-get': reverse_lazy('get_stripes'),  # Use reverse_lazy to get the URL
             'hx-trigger': 'change',
@@ -55,21 +44,33 @@ class RequiredRanks(forms.Form):
             'style': 'border: 1px solid #d1d1d1 !important;'
         })
     )
-
     required_stripes = forms.ChoiceField(
         choices=[],
         widget=forms.Select(attrs={
-            'class': 'select w-1/3',
+            'class': 'select w-1/2',
             'style': 'border: 1px solid #d1d1d1 !important;'
         })
     )
 
     def __init__(self, *args, **kwargs):
         initial_rank_data = kwargs.pop('initial_rank_data')
-        self.student_name = initial_rank_data['student_name']
-        self.badge_number = initial_rank_data['badge_number']
         super(RequiredRanks, self).__init__(*args, **kwargs)
         self.fields['required_ranks'].initial   = initial_rank_data['current_rank_num']
+        self.student_name = initial_rank_data['student_name']
+        self.badge_number = initial_rank_data['badge_number']
+
+        belts_list = (Belts
+                      .objects
+                      .all()
+                      .order_by('belt_id')
+                      .values_list('belt_id', 'belt_title'))
+        self.fields['required_ranks'].choices = belts_list
+
+        stripes_list = (BeltsByRank
+                        .objects
+                        .filter(rank_num=initial_rank_data['current_rank_num'])
+                        .values_list('stripe_id', 'stripe_name'))
+        self.fields['required_stripes'].choices = stripes_list
 
     class Meta:
         fields = (

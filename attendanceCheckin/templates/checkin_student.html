@@ -15,6 +15,7 @@
 <body class="">
 
 <script src="{% static 'display_crntdate.js' %}"></script>
+<script src="{% static 'required_rank.js' %}"></script>
 
 {% include 'modal_rank_required.html' %}
 
@@ -32,7 +33,7 @@
 </div>
 
 
-<form class="w-3/5 checkin_main mx-auto m-5 p-8 rounded-lg"
+<form id="frm_checkin_main" class="w-3/5 checkin_main mx-auto m-5 p-8 rounded-lg"
       hx-post="{% url 'badge_checkin' %}">
     {% csrf_token %}
     <div class="flex justify-center rounded-lg p-4">
@@ -58,6 +59,7 @@
     <div class="grid grid-cols-[100px_1fr] mt-4">
         <div>
         <button class="btn btn-sm btn-success"
+                type="button"
                 hx-post="{% url 'show_required_ranks' %}"
                 hx-target="#modal_rank_required"
                 hx-on::after-swap="modal_rank_required.showModal()"
@@ -91,6 +93,7 @@
 
 
 </div>
+</body>
 <script>
     window.onload = function(){
      console.log("Window has been loaded");
@@ -108,80 +111,9 @@
         document.getElementById('otherMessage').innerHTML = "";
     }
 
-    // ---------------------------------------------------------------------------
-    // respond to the 'ranks' button click
-    // ---------------------------------------------------------------------------
-    document.body.addEventListener('show_rank_required_dialog', () => {
-        console.log(`show_rank_required_dialog was activated`);
-        document.getElementById('badgeNumber').disabled = true;
-        document.getElementById('modal_rank_required').showModal();
-    });
 
-    document.body.addEventListener("rank_required_response", function(event) {
-        console.log(`rank_required_response was received`);
-        const badgeMessage     = document.getElementById('badgeMessage');
-        const badgeNumber      = document.getElementById('badgeNumber');
-        badgeMessage.innerHTML = event.detail.checkin_message;
-        if (event.detail.checkin_status === "error") {
-            badgeMessage.classList.add    ("text-error");
-            badgeMessage.classList.remove ("text-success");
-        }
-        else {
-            badgeMessage.classList.remove ("text-error");
-            badgeMessage.classList.add    ("text-success");
-        }
-        resetCheckinResponseMessages();
-        setTimeout(function() {
-            badgeMessage.innerHTML = "";
-            badgeMessage.classList.remove ("text-error");
-            badgeMessage.classList.remove ("text-success");
-            badgeNumber.value = '';
-            document.getElementById('badgeNumber').disabled = false;
-        }, 3000);
-    });
 
-<!--    document.body.addEventListener("rank_updated", function(event) {-->
-<!--        console.log(`rank_updated was received`);-->
-<!--        document.getElementById('modal_rank_required').close();-->
-<!--        document.getElementById('badgeNumber').disabled = false;-->
-<!--        const otherMessage     = document.getElementById('otherMessage');-->
-<!--        otherMessage.innerHTML = event.detail.rank_update_message;-->
-<!--        if (event.detail.rank_update_status === "error") {-->
-<!--            otherMessage.classList.add    ("text-error");-->
-<!--            otherMessage.classList.remove ("text-success");-->
-<!--        }-->
-<!--        else {-->
-<!--            otherMessage.classList.remove ("text-error");-->
-<!--            otherMessage.classList.add    ("text-success");-->
-<!--        }-->
-<!--    });-->
 
-    // ---------------------------------------------------------------------------
-    // respond to the rank_updated events
-    // ---------------------------------------------------------------------------
-    document.body.addEventListener("rank_update_response", function(event) {
-        console.log(`rank_update_response was received`);
-        document.getElementById('modal_rank_required').close();
-        document.getElementById('badgeNumber').disabled = false;
-        const badgeMessage     = document.getElementById('badgeMessage');
-        badgeMessage.innerHTML = event.detail.rank_update_message;
-        if (event.detail.rank_update_status === "error") {
-            badgeMessage.classList.add    ("text-error");
-            badgeMessage.classList.remove ("text-success");
-        }
-        else {
-            badgeMessage.classList.remove ("text-error");
-            badgeMessage.classList.add    ("text-success");
-        }
-        resetCheckinResponseMessages();
-        setTimeout(function() {
-            badgeMessage.innerHTML = "";
-            badgeMessage.classList.remove ("text-error");
-            badgeMessage.classList.remove ("text-success");
-            badgeNumber.value = '';
-            document.getElementById('badgeNumber').disabled = false;
-        }, 3000);
-    });
 
     // ---------------------------------------------------------------------------
     // respond to the checkin response
@@ -207,9 +139,9 @@
             checkinMessage.classList.add    ("text-success");
             checkinMessage.classList.remove ("text-error");
         }
+
     });
 
 
 </script>
-</body>
 </html>

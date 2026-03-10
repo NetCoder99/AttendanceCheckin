@@ -6,10 +6,11 @@
         <h3 id="studentGreeting" class="font-bold text-lg mb-2 mt-2 text-center">Please enter your current rank.</h3>
         <hr>
 
-        <form hx-post="{% url 'update_required_rank' %}"
+        <form id="frm_required_rank" hx-post="{% url 'update_required_rank' %}"
             class="mb-4">
             {% csrf_token %}
-            {{ form.badge_number}}
+            <input type="hidden" name="badge_number" value="{{ form.badge_number }}" />
+            {{ form.badge_number.as_hidden }}
             <div id="div_required_ranks" class="form-control w-full">
                 <label class="label">
                     <span class="label-text font-bold">Your current rank</span>
