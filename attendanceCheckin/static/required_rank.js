@@ -56,7 +56,7 @@ document.body.addEventListener("response_error_type", function(event) {
             badgeMessage.classList.remove ("text-success");
             badgeMessage.classList.remove ("text-error");
             badgeNumber.value = '';
-            document.getElementById('badgeNumber').disabled = false;
+            document.getElementById('badgeNumber').disabled = true;
         }, 3000);
     }
     else {
@@ -64,6 +64,7 @@ document.body.addEventListener("response_error_type", function(event) {
         rank_update_message.innerHTML = event.detail.checkin_message;
         rank_update_message.classList.add    ("text-error");
         rank_update_message.classList.remove ("text-success");
+        document.getElementById('badgeNumber').disabled = false;
     }
 });
 

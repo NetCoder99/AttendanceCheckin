@@ -1,6 +1,7 @@
 # App specific
 static/images/badges/*
 !static/images/badges/.gitkeep
+attendanceBase/media
 
 badgeData/*
 !badgeData/.gitkeep

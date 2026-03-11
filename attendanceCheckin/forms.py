@@ -64,7 +64,8 @@ class RequiredRanks(forms.Form):
                       .all()
                       .order_by('belt_id')
                       .values_list('belt_id', 'belt_title'))
-        self.fields['required_ranks'].choices = belts_list
+        empty_choice = [("0", '-- Select a belt --')]
+        self.fields['required_ranks'].choices = empty_choice + list(belts_list)
 
         stripes_list = (BeltsByRank
                         .objects

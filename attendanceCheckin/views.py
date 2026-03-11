@@ -1,6 +1,12 @@
+import base64
+import io
 import json
+import os
 
+from PIL import Image
 from django.http import HttpResponse
+from django.conf import settings
+#from django.contrib.staticfiles.storage import staticfiles_storage
 from django.shortcuts import render, get_object_or_404
 from datetime import datetime
 
@@ -89,18 +95,20 @@ def update_required_rank(request):
         if 'required_ranks' not in request.POST:
             return getResponseEvents(response_destination, "error", "Please select a belt rank!")
 
-        if 'required_stripes' not in request.POST:
-            return getResponseEvents(response_destination, "error", "Please select a stipe level!")
-
         # check for valid badge format
         if not badge_number:           return getResponseEvents(response_destination, "error", "Badge number can not be blank!")
         if not badge_number.isdigit(): return getResponseEvents(response_destination, "error", "Badge number must be all digits!")
 
         # check the badge matches a student record
-        student    = Students.objects.get(badge_number=badge_number)
-        if not student: return getResponseEvents(response_destination, "error", "Student record not found!")
+        student_record    = Students.objects.get(badge_number=badge_number)
+        if not student_record: return getResponseEvents(response_destination, "error", "Student record not found!")
 
-        # check the belt exists
+        # reset rank and stripes to null, mostly for testing gui behaviour
+        if request.POST['required_ranks'] == '0':
+            reset_student_rank(student_record)
+            return getRankUpdatedResponse(f"Rank was reset to nulls")
+
+        # valid belt was selected, check the belt exists, etc...
         selected_belt_id  = request.POST['required_ranks']
         belts_list = Belts.objects.filter(belt_id=selected_belt_id)
         if len(belts_list) == 0: return getResponseEvents(response_destination, "error", "Belt record was not found!")
@@ -108,6 +116,9 @@ def update_required_rank(request):
         belt_record = belts_list[0]
 
         # check the stripe exists and is valid for the belt
+        if 'required_stripes' not in request.POST:
+            return getResponseEvents(response_destination, "error", "Please select a stipe level!")
+
         selected_stripe_id  = request.POST['required_stripes']
         stripes_list = Stripes.objects.filter(stripe_id=selected_stripe_id)
         if len(stripes_list) == 0: return getResponseEvents(response_destination, "error", "Stripe record was not found!")
@@ -119,14 +130,14 @@ def update_required_rank(request):
 
         # update the student rank on the student record
         print(f'updating badge number:{badge_number} to {selected_belt_id} / {belt_record.belt_title}')
-        student.current_rank_num    = int(selected_belt_id)
-        student.current_rank_name   = belt_record.belt_title
-        student.current_stripe_id   = int(stripe_record.stripe_id)
-        student.current_stripe_name = stripe_record.stripe_name
-        student.save()
+        student_record.current_rank_num    = int(selected_belt_id)
+        student_record.current_rank_name   = belt_record.belt_title
+        student_record.current_stripe_id   = int(stripe_record.stripe_id)
+        student_record.current_stripe_name = stripe_record.stripe_name
+        student_record.save()
 
         # insert into the promotions history
-        insert_promotions_table(student, belt_record, stripe_record)
+        insert_promotions_table(student_record, belt_record, stripe_record)
 
         return getRankUpdatedResponse(f"Rank was updated to {belt_record.belt_title} with {stripe_record.stripe_name}")
     except Exception as ex:
@@ -134,7 +145,28 @@ def update_required_rank(request):
         return getRankExceptionResponse(ex)
 
 # --------------------------------------------------------------------
-def insert_promotions_table(student_record, belt_record, stripe_record):
+def reset_student_rank(student_record: any):
+    print(f'resetting student rank for badge_number: {student_record.badge_number}')
+    student_record.current_rank_num    = None
+    student_record.current_rank_name   = None
+    student_record.current_stripe_id   = None
+    student_record.current_stripe_name = None
+    student_record.save()
+    belt_record = Belts()
+    stripe_record = Stripes()
+    insert_promotions_table(student_record, belt_record, stripe_record, "Rank was reset")
+
+
+def update_student_rank(student_record: any, rank_data: dict):
+    print(f'updating badge number:{rank_data['badge_number']} to {rank_data['belt_id']} / {rank_data['belt_title']}')
+    student_record.current_rank_num    = rank_data['belt_id']
+    student_record.current_rank_name   = rank_data['belt_title']
+    student_record.current_stripe_id   = rank_data['stripe_id']
+    student_record.current_stripe_name = rank_data['stripe_name']
+    student_record.save()
+
+
+def insert_promotions_table(student_record, belt_record, stripe_record, comments: str = "Promotion"):
     promotion_record = Promotions()
     promotion_record.badge_number   = student_record.badge_number
     promotion_record.student_first_name   = student_record.first_name
@@ -143,6 +175,8 @@ def insert_promotions_table(student_record, belt_record, stripe_record):
     promotion_record.belt_title     = belt_record.belt_title
     promotion_record.stripe_id      = stripe_record.stripe_id
     promotion_record.stripe_title   = stripe_record.stripe_name
+    promotion_record.promotion_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    promotion_record.comments       = comments
     promotion_record.save()
 
 # --------------------------------------------------------------------
@@ -159,35 +193,81 @@ def badge_checkin(request):
 
         # check the badge matches a student record
         student_records    = Students.objects.filter(badge_number=badgeNumber)
-        if len(student_records) == 0: return getResponseEvents("error", "Student record not found!")
+        if len(student_records) == 0:
+            response = getResponseEvents("checkin_response", "error", "Student record not found!")
+            return response
         if len(student_records) >  1: return getResponseEvents("error", "Multiple student records found!")
         student_record = student_records[0]
 
-        # check if we should show the student rank/stripe required dialog
-        rank_required = False
-        if not student_record.current_rank_num:
-            rank_required = True
+        # save the student image to the Django static dir
+        media_image_name = save_student_image(student_record)
 
+        # check if we should show the student rank/stripe required dialog
+        #if not student_record.current_rank_num:
+        #    return ShowRankRequiredDialog(student_record)
+
+        # the gui should resubmit the checkin action after the rank required
+        # dialog is completed or cancelled
         selected_class  = GetCurrentClass()
         insert_attendance_record(student_record, selected_class)
+
+        # response could be checked in to current class, or show message about
+        # next available class
+        checkin_message = GetCheckedInMessage(student_record, selected_class)
 
         response = HttpResponse(status=204)
         events = {
             "checkin_response": {
-                "checkin_status"  : "success",
-                "checkin_message" : f'{student_record.first_name} {student_record.last_name} was checked in.',
-                "rank_required"   : True
+                "checkin_status"     : "success",
+                "checkin_message"    : checkin_message,
+                "rank_required"      : False,
+                "student_image_name" : media_image_name,
             },
         }
         response['HX-Trigger'] = json.dumps(events)
         return response
-    except Students.DoesNotExist:
-        return getResponseEvents("error", "Student record not found!")
-
-
     except Exception as ex:
         print(str(ex))
         return getExceptionResponse(ex)
+
+# --------------------------------------------------------------------
+def GetCheckedInMessage(student_record, selected_class):
+    if selected_class:
+        return f'{student_record.first_name} {student_record.last_name} was checked in for: {selected_class.class_name}.'
+    else:
+        return f'{student_record.first_name} {student_record.last_name} was not checked in, no classes at this time.'
+
+
+def ShowRankRequiredDialog(student_record):
+    response = HttpResponse(status=204)
+    events = {
+        "checkin_response": {
+            "checkin_status": "success",
+            "checkin_message": f'{student_record.first_name} {student_record.last_name} was checked in.',
+            "rank_required": True
+        },
+    }
+    response['HX-Trigger'] = json.dumps(events)
+    return response
+
+# --------------------------------------------------------------------
+# Save the student image to the django static dir, can't pass
+# very large strings to html
+# --------------------------------------------------------------------
+def save_student_image(student_record):
+    try:
+        image_data = base64.b64decode(student_record.student_image_base64)
+        image = Image.open(io.BytesIO(image_data))
+        subdirectory = 'student_images'
+        image_name   = student_record.student_image_name.split('.')[0] + '.webp'
+        output_path  = os.path.join(settings.MEDIA_ROOT, subdirectory, image_name)
+        quality      = '80'
+        image.save(output_path, 'WEBP', quality=quality)
+        return image_name
+    except Exception as e:
+        print(f"Error decoding base64: {str(e)}. Check for valid Base64 characters and padding.")
+        raise e
+
 
 # --------------------------------------------------------------------
 # Insert the attendance checkin record

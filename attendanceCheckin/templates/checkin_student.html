@@ -15,6 +15,7 @@
 <body class="">
 
 <script src="{% static 'display_crntdate.js' %}"></script>
+<script src="{% static 'checkin.js' %}"></script>
 <script src="{% static 'required_rank.js' %}"></script>
 
 {% include 'modal_rank_required.html' %}
@@ -25,7 +26,9 @@
 <div class="grid grid-cols-1 mt-16 mb-8">
 
     <div class="m-auto">
-        <img src="{% static 'rising-sun-martial-arts-logo.jpg' %}"
+        <img id="checkin_img_banner"
+             name="checkin_img_banner"
+             src="{% static 'rising-sun-martial-arts-logo.jpg' %}"
              alt="Checkin Image"
              class="banner object-center"
              width="800"/>
@@ -67,7 +70,7 @@
         </div>
         <div>
         <label id="badgeMessage" class="font-bold text-lg">
-            Rank Message
+
         </label>
         </div>
     </div>
@@ -76,19 +79,31 @@
 
 <div class="w-3/5 checkin_main_message mx-auto m-5 p-8 rounded-lg grid grid-cols-5 gap-4">
   <div class="col-span-1">
-    <img src="{% static 'RSM_Logo_002.jpg' %}" alt="Checkin Image" class="banner object-center" height="75"/>
+    <img id="checkin_img_student"
+         name="checkin_img_student"
+         src="/media/student_images/122043_32.webp"
+         alt="Student Image"
+         class="banner object-center"
+         height="75"/>
   </div>
   <div class="col-span-4">
     <div id="checkinMessage" class="flex mt-2 font-bold text-xl ">
-
+checkinMessage
     </div>
     <div id="promotionMessage" class="flex mt-4 font-bold text-xl ">
-
+promotionMessage
     </div>
     <div id="otherMessage" class="flex mt-4 font-bold text-xl ">
-
+otherMessage
     </div>
 
+    <div id="timerCountDown" class="flex mt-4 font-bold text-sm text-end text-orange-500 float-right">
+        <label id="checkinTimer5" class="m-0.5">5</label>
+        <label id="checkinTimer4" class="m-0.5">4</label>
+        <label id="checkinTimer3" class="m-0.5">3</label>
+        <label id="checkinTimer2" class="m-0.5">2</label>
+        <label id="checkinTimer1" class="m-0.5">1</label>
+    </div>
   </div>
 
 
@@ -99,49 +114,5 @@
      console.log("Window has been loaded");
      startDateTimerInterval();
     };
-
-    // ---------------------------------------------------------------------------
-    // common function to reset the checkin messages section
-    // ---------------------------------------------------------------------------
-    function resetCheckinResponseMessages() {
-        console.log(`resetCheckinResponseMessages`);
-        document.getElementById('badgeNumber').disabled = false;
-        document.getElementById('checkinMessage').innerHTML = "";
-        document.getElementById('promotionMessage').innerHTML = "";
-        document.getElementById('otherMessage').innerHTML = "";
-    }
-
-
-
-
-
-    // ---------------------------------------------------------------------------
-    // respond to the checkin response
-    // ---------------------------------------------------------------------------
-    document.body.addEventListener("checkin_response", function(event) {
-        console.log(`checkin_response was received`);
-
-        const checkinMessage   = document.getElementById('checkinMessage');
-        const promotionMessage = document.getElementById('promotionMessage');
-        const otherMessage     = document.getElementById('otherMessage');
-
-        if (event.detail.checkin_status === "error") {
-            checkinMessage.innerHTML   = event.detail.checkin_message;
-            promotionMessage.innerHTML = "";
-            otherMessage.innerHTML     = "";
-            checkinMessage.classList.add    ("text-error");
-            checkinMessage.classList.remove ("text-success");
-        }
-        else {
-            checkinMessage.innerHTML   = event.detail.checkin_message;
-            promotionMessage.innerHTML = "";
-            otherMessage.innerHTML     = "";
-            checkinMessage.classList.add    ("text-success");
-            checkinMessage.classList.remove ("text-error");
-        }
-
-    });
-
-
 </script>
 </html>

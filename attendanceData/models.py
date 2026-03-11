@@ -148,6 +148,7 @@ class Promotions(models.Model):
     promotion_date = models.TextField(db_column='promotionDate', blank=True, null=True)
     student_first_name = models.TextField(db_column='studentFirstName', blank=True, null=True)
     student_last_name  = models.TextField(db_column='studentLastName', blank=True, null=True)
+    comments  = models.TextField(db_column='comments', blank=True, null=True)
 
     class Meta:
         managed = False
