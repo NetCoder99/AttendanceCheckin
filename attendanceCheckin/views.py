@@ -2,12 +2,12 @@ import base64
 import io
 import json
 import os
+from pathlib import Path
 
 from PIL import Image
 from django.http import HttpResponse
 from django.conf import settings
-#from django.contrib.staticfiles.storage import staticfiles_storage
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render
 from datetime import datetime
 
 from attendanceCheckin.forms import CheckinForm, RequiredRanks
@@ -54,17 +54,17 @@ def get_stripes(request):
 def show_required_ranks(request):
     print(f'show_required_ranks was invoked')
     try:
-        response_error_type = "response_error_type"
+        show_ranks_error = "show_ranks_error"
         if 'badgeNumber' not in request.POST:
-            return getResponseEvents(response_error_type, "error", "Badge number is required!")
+            return getResponseEvents(show_ranks_error, "error", "Badge number is required!")
         if not request.POST['badgeNumber']:
-            return getResponseEvents(response_error_type, "error", "Badge number is required!")
+            return getResponseEvents(show_ranks_error, "error", "Badge number is required!")
         if not request.POST['badgeNumber'].isdigit():
-            return getResponseEvents(response_error_type, "error", "Badge number must be all digits!")
+            return getResponseEvents(show_ranks_error, "error", "Badge number must be all digits!")
 
         student    = Students.objects.filter(badge_number=request.POST['badgeNumber'])
-        if len(student) == 0: return getResponseEvents(response_error_type, "error", "Student record not found!")
-        if len(student) >  1: return getResponseEvents(response_error_type, "error", "Multiple student records found!")
+        if len(student) == 0: return getResponseEvents(show_ranks_error, "error", "Student record not found!")
+        if len(student) >  1: return getResponseEvents(show_ranks_error, "error", "Multiple student records found!")
 
         student_record  = student[0]
         initial_rank_data = {
@@ -188,23 +188,23 @@ def badge_checkin(request):
         badgeNumber = request.POST["badgeNumber"]
 
         # check for valid badge format
-        if not badgeNumber:           return getResponseEvents("error", "Badge number can not be blank!")
-        if not badgeNumber.isdigit(): return getResponseEvents("error", "Badge number must be all digits!")
+        if not badgeNumber:           return getResponseEvents("checkin_error", "error", "Badge number can not be blank!")
+        if not badgeNumber.isdigit(): return getResponseEvents("checkin_error", "error", "Badge number must be all digits!")
 
         # check the badge matches a student record
         student_records    = Students.objects.filter(badge_number=badgeNumber)
         if len(student_records) == 0:
-            response = getResponseEvents("checkin_response", "error", "Student record not found!")
+            response = getResponseEvents("checkin_error", "error", "Student record not found!")
             return response
-        if len(student_records) >  1: return getResponseEvents("error", "Multiple student records found!")
+        if len(student_records) >  1: return getResponseEvents("checkin_error", "error", "Multiple student records found!")
         student_record = student_records[0]
 
         # save the student image to the Django static dir
         media_image_name = save_student_image(student_record)
 
-        # check if we should show the student rank/stripe required dialog
-        #if not student_record.current_rank_num:
-        #    return ShowRankRequiredDialog(student_record)
+        # # check if we should show the student rank/stripe required dialog
+        # if not student_record.current_rank_num:
+        #     return show_required_ranks(request)
 
         # the gui should resubmit the checkin action after the rank required
         # dialog is completed or cancelled
@@ -215,12 +215,18 @@ def badge_checkin(request):
         # next available class
         checkin_message = GetCheckedInMessage(student_record, selected_class)
 
+        # check if we should show the student rank/stripe required dialog
+        rank_required = False
+        if not student_record.current_rank_num:
+            rank_required = True
+
+        # generate and return the checkin response
         response = HttpResponse(status=204)
         events = {
             "checkin_response": {
                 "checkin_status"     : "success",
                 "checkin_message"    : checkin_message,
-                "rank_required"      : False,
+                "rank_required"      : rank_required,
                 "student_image_name" : media_image_name,
             },
         }
@@ -256,14 +262,18 @@ def ShowRankRequiredDialog(student_record):
 # --------------------------------------------------------------------
 def save_student_image(student_record):
     try:
-        image_data = base64.b64decode(student_record.student_image_base64)
-        image = Image.open(io.BytesIO(image_data))
         subdirectory = 'student_images'
         image_name   = student_record.student_image_name.split('.')[0] + '.webp'
         output_path  = os.path.join(settings.MEDIA_ROOT, subdirectory, image_name)
-        quality      = '80'
-        image.save(output_path, 'WEBP', quality=quality)
-        return image_name
+        file_path = Path(output_path)
+        if file_path.exists():
+            return image_name
+        else:
+            image_data = base64.b64decode(student_record.student_image_base64)
+            image = Image.open(io.BytesIO(image_data))
+            quality      = '80'
+            image.save(output_path, 'WEBP', quality=quality)
+            return image_name
     except Exception as e:
         print(f"Error decoding base64: {str(e)}. Check for valid Base64 characters and padding.")
         raise e

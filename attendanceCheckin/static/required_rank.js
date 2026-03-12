@@ -30,10 +30,10 @@ document.body.addEventListener("modal_rank_required_response", function(event) {
     rank_update_message.innerHTML = event.detail.checkin_message;
     if (event.detail.checkin_status === "error") {
         rank_update_message.classList.remove ("text-success");
-        rank_update_message.classList.add    ("text-error");
+        rank_update_message.classList.add    ("text-danger");
     }
     else {
-        rank_update_message.classList.add    ("text-error");
+        rank_update_message.classList.add    ("text-danger");
         rank_update_message.classList.remove ("text-success");
     }
 });
@@ -42,30 +42,25 @@ document.body.addEventListener("modal_rank_required_response", function(event) {
 // ---------------------------------------------------------------------------
 // Process response from update rank/stipe submit
 // ---------------------------------------------------------------------------
-document.body.addEventListener("response_error_type", function(event) {
-    console.log(`rank_required_response was received`);
+document.body.addEventListener("show_ranks_error", function(event) {
+    console.log(`show_ranks_error was received`);
     const badgeMessage     = document.getElementById('badgeMessage');
     const badgeNumber      = document.getElementById('badgeNumber');
     badgeMessage.innerHTML = event.detail.checkin_message;
-    if (event.detail.checkin_status === "error") {
+    badgeMessage.classList.remove ("text-success");
+    badgeMessage.classList.add    ("text-danger");
+    badgeNumber.disabled = true;
+    document.getElementById('checkinMessage').innerHTML   = "&nbsp";
+    document.getElementById('promotionMessage').innerHTML = "&nbsp;";
+    document.getElementById('otherMessage').innerHTML     = "&nbsp";
+
+    setTimeout(function() {
+        badgeMessage.innerHTML = "";
         badgeMessage.classList.remove ("text-success");
-        badgeMessage.classList.add    ("text-error");
-        resetCheckinResponseMessages();
-        setTimeout(function() {
-            badgeMessage.innerHTML = "";
-            badgeMessage.classList.remove ("text-success");
-            badgeMessage.classList.remove ("text-error");
-            badgeNumber.value = '';
-            document.getElementById('badgeNumber').disabled = true;
-        }, 3000);
-    }
-    else {
-        rank_update_message = document.getElementById('rank_update_message');
-        rank_update_message.innerHTML = event.detail.checkin_message;
-        rank_update_message.classList.add    ("text-error");
-        rank_update_message.classList.remove ("text-success");
-        document.getElementById('badgeNumber').disabled = false;
-    }
+        badgeMessage.classList.remove ("text-danger");
+        badgeNumber.value = '';
+        badgeNumber.disabled = false;
+    }, 3000);
 });
 
 // ---------------------------------------------------------------------------
@@ -78,17 +73,17 @@ document.body.addEventListener("rank_update_response", function(event) {
     const badgeMessage     = document.getElementById('badgeMessage');
     badgeMessage.innerHTML = event.detail.rank_update_message;
     if (event.detail.rank_update_status === "error") {
-        badgeMessage.classList.add    ("text-error");
+        badgeMessage.classList.add    ("text-danger");
         badgeMessage.classList.remove ("text-success");
     }
     else {
-        badgeMessage.classList.remove ("text-error");
+        badgeMessage.classList.remove ("text-danger");
         badgeMessage.classList.add    ("text-success");
     }
     resetCheckinResponseMessages();
     setTimeout(function() {
         badgeMessage.innerHTML = "";
-        badgeMessage.classList.remove ("text-error");
+        badgeMessage.classList.remove ("text-danger");
         badgeMessage.classList.remove ("text-success");
         badgeNumber.value = '';
         document.getElementById('badgeNumber').disabled = false;

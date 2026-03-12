@@ -1,6 +1,27 @@
 // ---------------------------------------------------------------------------
 // respond to the checkin response
 // ---------------------------------------------------------------------------
+document.body.addEventListener("checkin_error", function(event) {
+    console.log(`checkin_error was received`);
+    const badgeMessage       = document.getElementById('badgeMessage');
+    badgeMessage.innerHTML   = event.detail.checkin_message;
+    badgeMessage.classList.add("text-danger");
+    document.getElementById('checkinMessage').innerHTML   = "&nbsp";
+    document.getElementById('promotionMessage').innerHTML = "&nbsp";
+    document.getElementById('otherMessage').innerHTML     = "&nbsp";
+    document.getElementById('badgeNumber').disabled       = true;
+    setTimeout(function() {
+        badgeMessage.innerHTML = "";
+        badgeMessage.classList.remove ("text-success");
+        badgeMessage.classList.remove ("text-danger");
+        badgeNumber.value = '';
+        document.getElementById('badgeNumber').disabled = false;
+    }, 3000);
+});
+
+// ---------------------------------------------------------------------------
+// respond to the checkin response
+// ---------------------------------------------------------------------------
 document.body.addEventListener("checkin_response", function(event) {
     console.log(`checkin_response was received`);
 
@@ -16,7 +37,7 @@ document.body.addEventListener("checkin_response", function(event) {
         checkinMessage.innerHTML   = event.detail.checkin_message;
         promotionMessage.innerHTML = "";
         otherMessage.innerHTML     = "";
-        checkinMessage.classList.add    ("text-error");
+        checkinMessage.classList.add    ("text-danger");
         //checkinMessage.classList.remove ("text-success");
     }
     else {
@@ -24,7 +45,13 @@ document.body.addEventListener("checkin_response", function(event) {
         promotionMessage.innerHTML = "";
         otherMessage.innerHTML     = "";
         //checkinMessage.classList.add    ("text-success");
-        checkinMessage.classList.remove ("text-error");
+        checkinMessage.classList.remove ("text-danger");
+    }
+
+    if (event.detail.rank_required) {
+        console.log("Showing rank required dialog!");
+        const btn_show_ranks = document.getElementById('btn_show_ranks');
+        btn_show_ranks.click();
     }
 
     startResetTimer();
@@ -38,7 +65,7 @@ function startResetTimer() {
         let count = 5;
         const intervalID = setInterval(() => {
           console.log(`Tick: ${count}`);
-          document.getElementById('checkinTimer'+count).classList.add("hidden");
+          document.getElementById('checkinTimer'+count).classList.add("invisible");
           count--;
           checkinTimer5
         }, 1000);
@@ -59,13 +86,14 @@ function startResetTimer() {
 function resetCheckinScreen() {
     console.log(`resetCheckinScreen`);
     document.getElementById('badgeNumber').value       = '';
+    document.getElementById('badgeNumber').disabled = false;
     document.getElementById('checkin_img_student').src = "/static/RSM_Logo_002.jpg"
     resetCheckinResponseMessages();
 }
 function resetCheckinResponseMessages() {
     console.log(`resetCheckinResponseMessages`);
     document.getElementById('badgeNumber').disabled = false;
-    document.getElementById('checkinMessage').innerHTML = "";
-    document.getElementById('promotionMessage').innerHTML = "";
-    document.getElementById('otherMessage').innerHTML = "";
+    document.getElementById('checkinMessage').innerHTML = "&nbsp";
+    document.getElementById('promotionMessage').innerHTML = "&nbsp";
+    document.getElementById('otherMessage').innerHTML = "&nbsp";
 }

@@ -2,8 +2,14 @@
   background-color: #DEF5D0;
 }
 
+.checkin_main_form {
+    width: 800px !important;
+}
+
+
 .checkin_main_message {
-  background-color: #FFFFCC;
+    width: 800px !important;
+    background-color: #FFFFCC;
 }
 
 .checkin_header_1 {
