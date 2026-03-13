@@ -30,7 +30,7 @@ class CheckinForm(forms.ModelForm):
             'studentImageField'
         )
 
-
+# ------------------------------------------------------------------
 class RequiredRanks(forms.Form):
     student_name = "Luke Skywalker"
     badge_number = "-1"
@@ -40,16 +40,12 @@ class RequiredRanks(forms.Form):
             'hx-get': reverse_lazy('get_stripes'),  # Use reverse_lazy to get the URL
             'hx-trigger': 'change',
             'hx-target': '#div_belt_stripes',
-            'class': 'select w-1/2',
-            'style': 'border: 1px solid #d1d1d1 !important;'
+            'class': 'select form-select',
         })
     )
     required_stripes = forms.ChoiceField(
         choices=[],
-        widget=forms.Select(attrs={
-            'class': 'select w-1/2',
-            'style': 'border: 1px solid #d1d1d1 !important;'
-        })
+        widget=forms.Select(attrs={})
     )
 
     def __init__(self, *args, **kwargs):
@@ -72,6 +68,7 @@ class RequiredRanks(forms.Form):
                         .filter(rank_num=initial_rank_data['current_rank_num'])
                         .values_list('stripe_id', 'stripe_name'))
         self.fields['required_stripes'].choices = stripes_list
+        self.fields['required_stripes'].initial = initial_rank_data['current_stripe_id']
 
     class Meta:
         fields = (

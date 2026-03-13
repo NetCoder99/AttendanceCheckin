@@ -7,6 +7,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rising Sun Class Checkin</title>
+
     {% load bootstrap5 %}
     {% bootstrap_css %}
     {% bootstrap_javascript %}
@@ -17,31 +18,23 @@
     <meta name="csrf-token" content="{{ csrf_token }}">
 </head>
 <body class="">
-<div class="navbar bg-secondary sticky top-0 z-50">
-  <!-- Navbar content here -->
-  <div class="w-32">
-    <a class="btn text-white" href="/">Check Ins</a>
-  </div>
-  <div class="w-32">
-    <a class="btn text-white" href="/get_belts">Belts</a>
-  </div>
-  <div class="flex-none">
-    <button class="btn btn-square btn-ghost">
-      <!-- SVG icon or other content -->
-    </button>
-  </div>
-</div>
+
+{% include 'navbar.html' %}
+
 <script src="{% static 'display_crntdate.js' %}"></script>
 <script src="{% static 'checkin.js' %}"></script>
 <script src="{% static 'required_rank.js' %}"></script>
 
-{% include 'modal_rank_required.html' %}
 
 <div id="modal-form-container">
-    <!-- The form will be loaded here -->
+    {% include 'modal_rank_required.html' %}
 </div>
-<div class="d-flex justify-content-center align-items-center mt-3">
 
+<div id="modal-form-demo">
+    {% include 'modal_demo.html' %}
+</div>
+
+<div class="d-flex justify-content-center align-items-center mt-3">
     <div class="mx-auto">
         <img id="checkin_img_banner"
              name="checkin_img_banner"
@@ -78,19 +71,18 @@
 
     <div class="row ms-4 mb-4">
         <div class="col-1">
-        <button id="btn_show_ranks"
-                name="btn_show_ranks"
-                class="btn btn-sm btn-success"
-                type="button"
-                hx-post="{% url 'show_required_ranks' %}"
-                hx-target="#modal_rank_required"
-                hx-on::after-swap="modal_rank_required.showModal()"
-                hx-swap="outerHTML">Ranks</button>
+            <button id="btn_show_ranks"
+                    name="btn_show_ranks"
+                    class="btn btn-sm btn-success"
+                    type="button"
+                    hx-post="{% url 'show_required_ranks' %}"
+                    hx-target="#modal_rank_required"
+                    hx-swap="outerHTML">Ranks</button>
         </div>
         <div class="col">
-        <h5 id="badgeMessage" class="fw-bold">
-            Badge Message
-        </h5>
+            <h5 id="badgeMessage" class="fw-bold">
+                Badge Message
+            </h5>
         </div>
     </div>
 

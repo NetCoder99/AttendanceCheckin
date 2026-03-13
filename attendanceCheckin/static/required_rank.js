@@ -4,7 +4,10 @@
 document.body.addEventListener('show_rank_required_dialog', () => {
     console.log(`show_rank_required_dialog was activated`);
     document.getElementById('badgeNumber').disabled = true;
-    document.getElementById('modal_rank_required').showModal();
+    const modal_rank_required_elmnt = document.getElementById('modal_rank_required');
+    const modal_rank_required_bs5   = new bootstrap.Modal(modal_rank_required_elmnt, {backdrop: 'static'});
+    modal_rank_required_bs5.show();
+    console.log(`modal_rank_required was shown`);
 });
 
 // ---------------------------------------------------------------------------
@@ -68,7 +71,8 @@ document.body.addEventListener("show_ranks_error", function(event) {
 // ---------------------------------------------------------------------------
 document.body.addEventListener("rank_update_response", function(event) {
     console.log(`rank_update_response was received`);
-    document.getElementById('modal_rank_required').close();
+    //document.getElementById('modal_rank_required').close();
+    document.getElementById('btn_rank_modal_close').click();
     document.getElementById('badgeNumber').disabled = false;
     const badgeMessage     = document.getElementById('badgeMessage');
     badgeMessage.innerHTML = event.detail.rank_update_message;
