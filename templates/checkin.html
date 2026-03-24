@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Student Checkin{% endblock %}
+
+{% block styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='checkin.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div id="modal-container"></div>
+
+<div class="d-flex justify-content-center align-items-center mt-5">
+    <div class="mx-auto">
+        <img id="checkin_img_banner"
+             name="checkin_img_banner"
+             src="{{ url_for('static', filename='images/rising-sun-martial-arts-logo.jpg') }}"
+             alt="Checkin Image"
+             class="banner object-center"
+             width="800"/>
+    </div>
+</div>
+
+<div class="d-flex justify-content-center">
+
+<form id="frm_checkin_main" class="checkin_main mt-3 checkin_main_form border rounded"
+      hx-post="{{ url_for('badge_checkin') }}">
+    <div class="flex text-center rounded-lg p-4">
+        <h2 class="fw-bold rounded-lg pt-4 pb-1">
+            Please checkin before starting class...
+        </h2>
+    </div>
+    <div class="d-flex justify-content-center align-items-center mt-2">
+        <input
+                type="text"
+                id="badgeNumber"
+                name="badgeNumber"
+                class=" w-1/4 p-2 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500"
+        />
+    </div>
+    <div class="text-center justify-center mt-4">
+        <h4 id="currentDateTime" class="fw-bold">
+            Today's date and time.
+        </h4>
+    </div>
+
+
+    <div class="d-flex ms-4 mb-4">
+            <button id="btn_show_ranks"
+                    name="btn_show_ranks"
+                    class="btn btn-sm btn-success d-inline-block"
+                    type="button"
+                    hx-get="/show_student_ranks_modal"
+                    hx-include="#badgeNumber"
+            >Ranks</button>
+            {% include 'partials/badgeMessage.html' %}
+    </div>
+
+</form>
+
+</div>
+
+<div id="checkin_response_panel">
+    {% include 'partials/checkin_response_panel.html' %}
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ super() }} {# This calls the parent block's content if any #}
+    <script src="{{ url_for('static', filename='scripts/display_crntdate.js') }}"></script>
+    <script src="{{ url_for('static', filename='scripts/checkin.js') }}"></script>
+    <script src="{{ url_for('static', filename='scripts/required_rank.js') }}"></script>
+    <script>
+        window.onload = function(){
+         console.log("Window has been loaded");
+         startDateTimerInterval();
+        };
+
+    </script>
+{% endblock %}

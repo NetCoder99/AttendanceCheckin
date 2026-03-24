@@ -1,0 +1,82 @@
+<div id="modal_rank_required" class="modal p-3" hx-ext="debug">
+    <div class="modal-dialog">
+    <div class="modal-content">
+
+        <h4 id="studentHeader"   class="fw-bold mb-2 mt-4 text-center ">Hello - {{student_name}}</h4>
+        <h4 id="studentGreeting" class="fw-bold mb-2 mt-1 text-center ">Please enter your current rank.</h4>
+
+        <form id="frm_required_rank"
+              class="mb-4 p-4"
+              hx-post="/update_required_rank"
+              hx-target="#rank_update_message"
+              hx-swap="innerHTML">
+            <input type="hidden" name="badge_number" value="{{ badge_number }}" />
+            <div class="row">
+                <div id="div_required_ranks_label"        class="col-6">
+                    <span class="label-text fw-bold">Your current rank</span>
+                </div>
+                <div id="div_required_ranks_select"  class="col-6">
+                    <select id="id_required_ranks"
+                            name="id_required_ranks"
+                            class="form-select"
+                            hx-get="/get_stripes"
+                            hx-trigger="change"
+                            hx-target="#div_belt_stripes_select">
+                        {% for rank_record in belts_list %}
+                        <option value="{{ rank_record[0] }}" {% if rank_record[0] == current_rank_num %} selected {% endif %}>
+                            {{ rank_record[1] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div id="div_belt_stripes_label " class="col-6">
+                    <span class="fw-bold">How many stripes</span>
+                </div>
+                <div id="div_belt_stripes_select" class="col-6">
+                    <select id="id_required_stripes"
+                            name="id_required_stripes"
+                            class="form-select" >
+                        {% for stripe_record in stripes_list %}
+                        <option value="{{ stripe_record[0] }}" {% if stripe_record[0] == current_stripe_id %} selected {% endif %}>
+                            {{ stripe_record[1] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="modal-action d-flex mt-3">
+                <div class="">
+                    <h5 id="rank_update_message" class="text-success fw-bold text-center mb-3">Rank update message</h5>
+                </div>
+                <div class="ms-auto">
+                    <button id="btn_rank_modal_close"
+                            name="btn_rank_modal_close"
+                            type="reset"
+                            class="btn btn-danger me-3"
+                            onclick="clearAllRankRequiredInputs(); "
+                            data-bs-dismiss="modal"
+                            >Cancel</button>
+                    <button id="btn_rank_modal_submit"
+                            name="btn_rank_modal_submit"
+                            type="submit"
+                            class="btn btn-success">Submit</button>
+                </div>
+            </div>
+        </form>
+    </div>
+    </div>
+</div>
+
+<script>
+    function clearAllRankRequiredInputs() {
+        console.log(`clearAllRankRequiredInputs`);
+        var inputs = document.querySelectorAll('#contact_modal input');
+        inputs.forEach(function(input) {
+            input.value = '';
+        });
+        document.getElementById('badgeNumber').disabled = false;
+        document.getElementById('checkinMessage').innerHTML = "";
+        document.getElementById('promotionMessage').innerHTML = "";
+        document.getElementById('otherMessage').innerHTML = "";
+    }
+</script>

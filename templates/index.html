@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+    <div class="container mt-5">
+        <h1>Dynamic Forms with HTMX and Flask - Index</h1>
+
+        <form hx-get="/update_fields" hx-target="#dynamic-fields">
+            <div class="form-group">
+                <label for="type">Form Type:</label>
+                <select id="type" name="type" class="form-control">
+                    <option value="basic">Basic</option>
+                    <option value="advanced">Advanced</option>
+                </select>
+            </div>
+        </form>
+
+        <form hx-post="/submit" hx-target="#response" hx-swap="innerHTML">
+            <div class="form-group">
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" class="form-control" >
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" class="form-control" >
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Phone:</label>
+                <input type="tel" id="phone" name="phone" class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label for="address">Address:</label>
+                <textarea id="address" name="address" class="form-control"></textarea>
+            </div>
+
+            <div id="dynamic-fields"></div>
+
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+
+        <div id="response"></div>
+    </div>
+{% endblock %}

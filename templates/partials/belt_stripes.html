@@ -1,0 +1,8 @@
+<select id="id_required_stripes"
+        name="id_required_stripes"
+        class="form-select" >
+    {% for stripe_record in stripes_list %}
+    <option value="{{ stripe_record[0] }}" {% if stripe_record[0] == current_stripe_id %} selected {% endif %}>
+        {{ stripe_record[1] }}</option>
+    {% endfor %}
+</select>
