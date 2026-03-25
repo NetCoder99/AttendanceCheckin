@@ -2,7 +2,7 @@ from flask import render_template, request
 from flask_htmx import make_response
 
 from classes.sqlite_procs import getDbSession
-from models import Belts, Stripes, Students, Promotions, Attendance, EligibilityCounts
+from models import Belts, Stripes, Students, Promotions, Attendance, VwEligibilityCounts
 from datetime import datetime
 from sqlalchemy import select, literal, func
 
@@ -68,9 +68,9 @@ def show_student_ranks_func():
     class_count_stmt = select(func.count()).where(Attendance.badgeNumber == student_record.badgeNumber)
     student_class_count = db_session.scalar(class_count_stmt)
     eligibility_records = (db_session
-                           .query(EligibilityCounts)
-                           .where(EligibilityCounts.eligibleCount <= student_class_count)
-                           .order_by(EligibilityCounts.rowNum.desc())
+                           .query(VwEligibilityCounts)
+                           .where(VwEligibilityCounts.eligibleCount <= student_class_count)
+                           .order_by(VwEligibilityCounts.rowNum.desc())
                            .first())
 
     # pick, or guess, the student belt and stripe

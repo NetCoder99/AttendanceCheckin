@@ -142,8 +142,21 @@ class Attendance(Base):
     styleNum: Mapped[Optional[int]] = mapped_column(Integer)
     appliesPromotion: Mapped[Optional[str]] = mapped_column(Text)
 
+class ElgibilityCounts(Base):
+    __tablename__ = 'elgibilityCounts'
+    __table_args__ = (
+        Index('elgibilityCounts_n1', 'eligibleCount'),
+    )
 
-class EligibilityCounts(Base):
+    rowNum: Mapped[Optional[int]] = mapped_column(Integer, primary_key=True)
+    beltId: Mapped[Optional[int]] = mapped_column(Integer)
+    stripePrefixSeq: Mapped[Optional[int]] = mapped_column(Integer)
+    beltTitle: Mapped[Optional[str]] = mapped_column(Text)
+    stripeTitle: Mapped[Optional[str]] = mapped_column(Text)
+    classCount: Mapped[Optional[int]] = mapped_column(Integer)
+    eligibleCount: Mapped[Optional[int]] = mapped_column(Integer)
+
+class VwEligibilityCounts(Base):
     __tablename__ = 'vw_elgibility_counts'      # Name of the view in SQLite
     rowNum = Column(Integer, primary_key=True)  # Map an existing unique column
     beltId = Column(Integer)

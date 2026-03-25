@@ -8,7 +8,7 @@ from classes.checkin_procs import getCheckinMessage, GetCurrentClass, InsertAtte
     getCheckinPanel
 from classes.ranks_procs import getRanksMessage, getBadgeMessage, get_stripes_func, show_student_ranks_func, update_required_rank_func
 from classes.sqlite_procs import getDbSession
-from models import Students, EligibilityCounts, Attendance
+from models import Students, VwEligibilityCounts, Attendance
 
 app = Flask(__name__)
 #app.config['EXPLAIN_TEMPLATE_LOADING'] = True
@@ -89,9 +89,9 @@ def badge_checkin():
         student_class_count = db_session.scalar(class_count_stmt)
 
         eligibility_records = (db_session
-                            .query(EligibilityCounts)
-                            .where(EligibilityCounts.eligibleCount > student_class_count)
-                            .order_by(EligibilityCounts.eligibleCount.asc())
+                            .query(VwEligibilityCounts)
+                            .where(VwEligibilityCounts.eligibleCount > student_class_count)
+                            .order_by(VwEligibilityCounts.eligibleCount.asc())
                             .first())
 
         #  fetch the next promotion counts and message
