@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Attendance Tables{% endblock %}
+
+{% block content %}
+<div class="mt-5 p-5">
+    <h1>Welcome to the Attendance Tables page!</h1>
+    <p>Select a table to view details for that table.</p>
+    <button type="button" id="createTables" >Create Tables</button>
+    <button type="button" id="initializeTables" >Initialize Tables</button>
+
+    <button type="button"
+            id="importStudents"
+            hx-get="/import_students"
+            hx-target="#import_response"
+            hx-swap="innerHTML"
+            hx-on::before-request="resetImportResponse()"
+            >Import Students</button>
+
+    <div id="import_response">
+
+    </div>
+
+</div>
+{% endblock %}
+{% block javascripts %}
+    {{ super() }} {# This calls the parent block's content if any #}
+    <script src="{{ url_for('static', filename='scripts/import_scripts.js') }}"></script>
+    <script>
+        window.onload = function(){
+         console.log("Tables window has been loaded");
+        };
+    </script>
+{% endblock %}

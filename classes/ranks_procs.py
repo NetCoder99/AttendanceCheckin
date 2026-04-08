@@ -2,7 +2,7 @@ from flask import render_template, request
 from flask_htmx import make_response
 
 from classes.sqlite_procs import getDbSession
-from models import Belts, Stripes, Students, Promotions, Attendance, VwEligibilityCounts
+from models import Belts, Stripes, Students, Promotions, Attendance, EligibilityCounts
 from datetime import datetime
 from sqlalchemy import select, literal, func
 

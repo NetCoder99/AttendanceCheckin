@@ -6,9 +6,11 @@ from sqlalchemy import select, func
 
 from classes.checkin_procs import getCheckinMessage, GetCurrentClass, InsertAttendanceRecord, SaveStudentImage, \
     getCheckinPanel
+from classes.imports.import_students import importStudents
 from classes.ranks_procs import getRanksMessage, getBadgeMessage, get_stripes_func, show_student_ranks_func, update_required_rank_func
 from classes.sqlite_procs import getDbSession
-from models import Students, VwEligibilityCounts, Attendance
+from classes.table_procs import displayAllTables
+from models import Students, EligibilityCounts, Attendance
 
 app = Flask(__name__)
 #app.config['EXPLAIN_TEMPLATE_LOADING'] = True
@@ -21,9 +23,24 @@ db_session = getDbSession()
 def checkin():
     return render_template('checkin.html')
 
+@app.route('/tables')
+def tables():
+    return displayAllTables()
+
 @app.route('/about')
 def about():
     return render_template('about.html')
+
+
+# --------------------------------------------------------------------
+# Misc import actions
+# --------------------------------------------------------------------
+@app.route('/import_students')
+def import_students():
+    import_counts = importStudents("AttendanceV2.db", "AttendanceV3.db")
+    return import_counts
+
+
 
 # --------------------------------------------------------------------
 # Update stripe dropdown on Belt Id change event
@@ -89,9 +106,9 @@ def badge_checkin():
         student_class_count = db_session.scalar(class_count_stmt)
 
         eligibility_records = (db_session
-                            .query(VwEligibilityCounts)
-                            .where(VwEligibilityCounts.eligibleCount > student_class_count)
-                            .order_by(VwEligibilityCounts.eligibleCount.asc())
+                            .query(EligibilityCounts)
+                            .where(EligibilityCounts.eligibleCount > student_class_count)
+                            .order_by(EligibilityCounts.eligibleCount.asc())
                             .first())
 
         #  fetch the next promotion counts and message
@@ -113,6 +130,7 @@ def badge_checkin():
     except Exception as ex:
         print(str(ex))
         return getCheckinMessage('error', str(ex))
+
 
 
 if __name__ == '__main__':
