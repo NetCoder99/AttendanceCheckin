@@ -1,6 +1,7 @@
 from sqlalchemy import select, create_engine, inspect
 from sqlalchemy.orm import sessionmaker
 
+from classes.imports.import_common import getImportSession, cloneRecord
 from classes.sqlite_procs import getDbPath, getDbSession
 from models import Students
 from datetime import datetime
@@ -26,7 +27,6 @@ def importStudents(srce_db_name: str, dest_db_name: str):
         # db_session_dest.commit()
 
         for student_record in db_session_srce.query(Students):
-            #student_record_srce = db_session_srce.query(Students).filter_by(badgeNumber=100).first()
             student_record_dest = cloneRecord(student_record)
             student_record_dest.createDateTime = student_record_dest.createDateTime if student_record_dest.createDateTime else updateDateTime
             student_record_dest.updateDateTime = updateDateTime
@@ -42,20 +42,3 @@ def importStudents(srce_db_name: str, dest_db_name: str):
     else:
         return import_counts
 
-
-def getImportSession(db_path: str):
-    engine  = create_engine(f'sqlite:///{db_path}')
-    Session = sessionmaker(bind=engine)
-    return Session()
-
-
-def cloneRecord(instance):
-    mapper = inspect(instance).mapper
-    for col in mapper.column_attrs:
-        print(f'col: {col}')
-
-    #cols = [c.key for c in mapper.column_attrs if not c.primary_key]
-    cols = [c.key for c in mapper.column_attrs]
-    print(f'cols: {cols}')
-    data = {c: getattr(instance, c) for c in cols}
-    return instance.__class__(**data)

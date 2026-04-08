@@ -68,9 +68,9 @@ def show_student_ranks_func():
     class_count_stmt = select(func.count()).where(Attendance.badgeNumber == student_record.badgeNumber)
     student_class_count = db_session.scalar(class_count_stmt)
     eligibility_records = (db_session
-                           .query(VwEligibilityCounts)
-                           .where(VwEligibilityCounts.eligibleCount <= student_class_count)
-                           .order_by(VwEligibilityCounts.rowNum.desc())
+                           .query(EligibilityCounts)
+                           .where(EligibilityCounts.eligibleCount <= student_class_count)
+                           .order_by(EligibilityCounts.rowNum.desc())
                            .first())
 
     # pick, or guess, the student belt and stripe

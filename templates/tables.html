@@ -9,14 +9,62 @@
     <button type="button" id="createTables" >Create Tables</button>
     <button type="button" id="initializeTables" >Initialize Tables</button>
 
-    <button type="button"
-            id="importStudents"
-            hx-get="/import_students"
-            hx-target="#import_response"
-            hx-swap="innerHTML"
-            hx-on::before-request="resetImportResponse()"
-            >Import Students</button>
-
+    <ul>
+        <li>
+            <button type="button"
+                id="importStudents"
+                hx-get="/import_students"
+                hx-target="#import_response"
+                hx-swap="innerHTML"
+                hx-on::before-request="resetImportResponse()"
+                >Import Students</button>
+        </li>
+        <li>
+            <button type="button"
+                id="importBelts"
+                hx-get="/import_belts"
+                hx-target="#import_response"
+                hx-swap="innerHTML"
+                hx-on::before-request="resetImportResponse()"
+                >Import Belts</button>
+        </li>
+        <li>
+            <button type="button"
+                id="importClasses"
+                hx-get="/import_classes"
+                hx-target="#import_response"
+                hx-swap="innerHTML"
+                hx-on::before-request="resetImportResponse()"
+                >Import Classes</button>
+        </li>
+        <li>
+            <button type="button"
+                id="importEligibility"
+                hx-get="/import_eligibility"
+                hx-target="#import_response"
+                hx-swap="innerHTML"
+                hx-on::before-request="resetImportResponse()"
+                >Import Eligibility</button>
+        </li>
+        <li>
+            <button type="button"
+                id="importPromotions"
+                hx-get="/import_promotions"
+                hx-target="#import_response"
+                hx-swap="innerHTML"
+                hx-on::before-request="resetImportResponse()"
+                >Import Promotions</button>
+        </li>
+        <li>
+            <button type="button"
+                id="importStripes"
+                hx-get="/import_stripes"
+                hx-target="#import_response"
+                hx-swap="innerHTML"
+                hx-on::before-request="resetImportResponse()"
+                >Import Stripes</button>
+        </li>
+    </ul>
     <div id="import_response">
 
     </div>
