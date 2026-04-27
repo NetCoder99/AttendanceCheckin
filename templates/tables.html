@@ -64,6 +64,33 @@
                 hx-on::before-request="resetImportResponse()"
                 >Import Stripes</button>
         </li>
+        <li>
+            <button type="button"
+                id="importAssets"
+                hx-get="/import_assets"
+                hx-target="#import_response"
+                hx-swap="innerHTML"
+                hx-on::before-request="resetImportResponse()"
+                >Import Assets</button>
+        </li>
+        <li>
+            <button type="button"
+                id="importStyles"
+                hx-get="/import_styles"
+                hx-target="#import_response"
+                hx-swap="innerHTML"
+                hx-on::before-request="resetImportResponse()"
+                >Import Styles</button>
+        </li>
+        <li>
+            <button type="button"
+                id="importZipcodes"
+                hx-get="/import_zipcodes"
+                hx-target="#import_response"
+                hx-swap="innerHTML"
+                hx-on::before-request="resetImportResponse()"
+                >Import ZipCodes</button>
+        </li>
     </ul>
     <div id="import_response">
 

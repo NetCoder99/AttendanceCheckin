@@ -1,9 +1,9 @@
+import models
 from classes.imports.import_common import getImportSession, cloneRecord, getTableByClassName
 from classes.sqlite_procs import getDbPath
-from models import Stripes, Base
 from datetime import datetime
 
-def importStripes(srce_db_name: str, dest_db_name: str):
+def importTable(srce_db_name: str, dest_db_name: str, table_name: str):
     excep_list    = []
     import_counts = {'records_read' : 0, 'records_inserted' : 0, 'records_updated' : 0, 'records_error' : 0 }
     try:
@@ -13,7 +13,10 @@ def importStripes(srce_db_name: str, dest_db_name: str):
         db_session_dest  = getImportSession(dest_db)
         updateDateTime   = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        for import_record in db_session_srce.query(Stripes):
+        table_obj = getattr(models, table_name)
+        # table_obj        = getTableByClassName(models.Base, table_name)
+
+        for import_record in db_session_srce.query(table_obj):
             import_record_dest = cloneRecord(import_record)
             if not import_record_dest.createDateTime:
                 import_record_dest.createDateTime = updateDateTime

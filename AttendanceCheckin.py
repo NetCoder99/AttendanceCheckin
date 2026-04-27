@@ -2,20 +2,23 @@
 
 from flask import Flask, render_template, request
 from flaskwebgui import FlaskUI
-from sqlalchemy import select, func
+#from sqlalchemy import select, func
 
-from classes.checkin_procs import getCheckinMessage, GetCurrentClass, InsertAttendanceRecord, SaveStudentImage, \
-    getCheckinPanel
+from classes.checkin_procs import getCheckinMessage, CheckinMain
+    # , GetCurrentClass, InsertAttendanceRecord, SaveStudentImage, \
+    # getCheckinPanel, CheckinMain
 from classes.imports.import_belts import importBelts
 from classes.imports.import_classes import importClasses
 from classes.imports.import_eligibilty import importEligibility
 from classes.imports.import_promotions import importPromotions
-from classes.imports.import_stripes import importTable
+from classes.imports.import_stripes import  importStripes
 from classes.imports.import_students import importStudents
+from classes.imports.import_table import importTable
 from classes.ranks_procs import getRanksMessage, getBadgeMessage, get_stripes_func, show_student_ranks_func, update_required_rank_func
 from classes.sqlite_procs import getDbSession
+from classes.student_procs import displayAllStudents
 from classes.table_procs import displayAllTables
-from models import Students, EligibilityCounts, Attendance
+# from models import Students, EligibilityCounts, Attendance
 
 app = Flask(__name__)
 #app.config['EXPLAIN_TEMPLATE_LOADING'] = True
@@ -31,6 +34,10 @@ def checkin():
 @app.route('/tables')
 def tables():
     return displayAllTables()
+
+@app.route('/students')
+def students():
+    return displayAllStudents()
 
 @app.route('/about')
 def about():
@@ -67,9 +74,23 @@ def import_promotions():
 
 @app.route('/import_stripes')
 def import_stripes():
-    import_counts = importTable("AttendanceV2.db", "AttendanceV3.db", "Stripes")
+    import_counts = importStripes("AttendanceV2.db", "AttendanceV3.db")
     return import_counts
 
+@app.route('/import_assets')
+def import_assets():
+    import_counts = importTable("AttendanceV2.db", "AttendanceV3.db", "Assets")
+    return import_counts
+
+@app.route('/import_styles')
+def import_styles():
+    import_counts = importTable("AttendanceV2.db", "AttendanceV3.db", "Styles")
+    return import_counts
+
+@app.route('/import_zipcodes')
+def import_zipcodes():
+    import_counts = importTable("AttendanceV2.db", "AttendanceV3.db", "ZipCodes")
+    return import_counts
 
 # --------------------------------------------------------------------
 # Update stripe dropdown on Belt Id change event
@@ -110,51 +131,52 @@ def update_required_rank():
 def badge_checkin():
     print(f'badge_checkin was invoked')
     try:
-        badge_number = request.form['badgeNumber']
-
-        # check for valid badge format
-        if not badge_number: return getCheckinMessage("error", "Badge number can not be blank!")
-        if not badge_number.isdigit(): return getCheckinMessage("error", "Badge number must be all digits!")
-
-        # check the badge matches a student record
-        student_record = db_session.query(Students).filter_by(badgeNumber=badge_number).first()
-        if not student_record: return getCheckinMessage("error", "Student record not found!")
-
-        # check for multiple checkin actions
-
-        # get the current class and insert the attendance record
-        selected_class = GetCurrentClass()
-        InsertAttendanceRecord(student_record, selected_class)
-
-        # if the student does not have a rank entry, display the select rank dialog
-        if not student_record.currentRankNum:
-            return show_student_ranks_func()
-
-        # get next promotion eligibility fields
-        class_count_stmt    = select(func.count()).where(Attendance.badgeNumber == badge_number)
-        student_class_count = db_session.scalar(class_count_stmt)
-
-        eligibility_records = (db_session
-                            .query(EligibilityCounts)
-                            .where(EligibilityCounts.eligibleCount > student_class_count)
-                            .order_by(EligibilityCounts.eligibleCount.asc())
-                            .first())
-
-        #  fetch the next promotion counts and message
-        classes_until_next = eligibility_records.eligibleCount - student_class_count
-        eligible_message = f'{classes_until_next} classes until eligible for {eligibility_records.stripeTitle}'
-
-        # save the image to static directory, let html fetch large files
-        student_image_name = SaveStudentImage(student_record)
-        student_image_url  = f"/static/images/{student_image_name}"
-        return getCheckinPanel(
-            'success',
-            'Checkin was completed',
-            student_image_url,
-            student_record,
-            selected_class,
-            promotion_message=eligible_message
-        )
+        return CheckinMain()
+        # badge_number = request.form['badgeNumber']
+        #
+        # # check for valid badge format
+        # if not badge_number: return getCheckinMessage("error", "Badge number can not be blank!")
+        # if not badge_number.isdigit(): return getCheckinMessage("error", "Badge number must be all digits!")
+        #
+        # # check the badge matches a student record
+        # student_record = db_session.query(Students).filter_by(badgeNumber=badge_number).first()
+        # if not student_record: return getCheckinMessage("error", "Student record not found!")
+        #
+        # # check for multiple checkin actions
+        #
+        # # get the current class and insert the attendance record
+        # selected_class = GetCurrentClass()
+        # InsertAttendanceRecord(student_record, selected_class)
+        #
+        # # if the student does not have a rank entry, display the select rank dialog
+        # if not student_record.currentRankNum:
+        #     return show_student_ranks_func()
+        #
+        # # get next promotion eligibility fields
+        # class_count_stmt    = select(func.count()).where(Attendance.badgeNumber == badge_number)
+        # student_class_count = db_session.scalar(class_count_stmt)
+        #
+        # eligibility_records = (db_session
+        #                     .query(EligibilityCounts)
+        #                     .where(EligibilityCounts.eligibleCount > student_class_count)
+        #                     .order_by(EligibilityCounts.eligibleCount.asc())
+        #                     .first())
+        #
+        # #  fetch the next promotion counts and message
+        # classes_until_next = eligibility_records.eligibleCount - student_class_count
+        # eligible_message = f'{classes_until_next} classes until eligible for {eligibility_records.stripeTitle}'
+        #
+        # # save the image to static directory, let html fetch large files
+        # student_image_name = SaveStudentImage(student_record)
+        # student_image_url  = f"/static/images/{student_image_name}"
+        # return getCheckinPanel(
+        #     'success',
+        #     'Checkin was completed',
+        #     student_image_url,
+        #     student_record,
+        #     selected_class,
+        #     promotion_message=eligible_message
+        # )
 
     except Exception as ex:
         print(str(ex))

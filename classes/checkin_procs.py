@@ -5,14 +5,72 @@ from datetime import datetime
 from pathlib import Path
 from PIL import Image
 
-from flask import current_app, render_template
+from flask import current_app, render_template, request
 from flask_htmx import make_response
 
+from classes.ranks_procs import show_student_ranks_func
 from classes.sqlite_procs import getDbSession
-from models import Classes, Attendance, Students
+from models import Classes, Attendance, Students, EligibilityCounts
+from sqlalchemy import select, func
 
 # ------------------------------------------------------------------------------------------
 db_session = getDbSession()
+
+def CheckinMain():
+    print(f'badge_checkin was invoked')
+    try:
+        badge_number = request.form['badgeNumber']
+
+        # check for valid badge format
+        if not badge_number: return getCheckinMessage("error", "Badge number can not be blank!")
+        if not badge_number.isdigit(): return getCheckinMessage("error", "Badge number must be all digits!")
+
+        # check the badge matches a student record
+        student_record = db_session.query(Students).filter_by(badgeNumber=badge_number).first()
+        if not student_record: return getCheckinMessage("error", "Student record not found!")
+
+        # check for multiple checkin actions, on a single day
+
+        # get the current class and insert the attendance record
+        selected_class = GetCurrentClass()
+        InsertAttendanceRecord(student_record, selected_class)
+
+        # if the student does not have a rank entry, display the select rank dialog
+        if not student_record.currentRankNum:
+            return show_student_ranks_func()
+
+        # get next promotion eligibility fields
+        class_count_stmt    = select(func.count()).where(Attendance.badgeNumber == badge_number)
+        student_class_count = db_session.scalar(class_count_stmt)
+
+        eligibility_records = (db_session
+                            .query(EligibilityCounts)
+                            .where(EligibilityCounts.eligibleCount > student_class_count)
+                            .order_by(EligibilityCounts.eligibleCount.asc())
+                            .first())
+
+        #  fetch the next promotion counts and message
+        classes_until_next = eligibility_records.eligibleCount - student_class_count
+        eligible_message = f'{classes_until_next} classes until eligible for {eligibility_records.stripeTitle}'
+
+        # save the image to static directory, let html fetch large files
+        student_image_name = SaveStudentImage(student_record)
+        student_image_url  = f"/static/images/{student_image_name}"
+        return getCheckinPanel(
+            'success',
+            'Checkin was completed',
+            student_image_url,
+            student_record,
+            selected_class,
+            promotion_message=eligible_message
+        )
+
+    except Exception as ex:
+        print(str(ex))
+        return getCheckinMessage('error', str(ex))
+
+
+
 
 # --------------------------------------------------------------------
 # Search for class within the start and stop times

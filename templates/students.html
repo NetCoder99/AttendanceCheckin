@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Student Selection{% endblock %}
+
+{% block styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='checkin.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div id="div_space" class="mt-5"></div>
+
+<div id="div_students_main" class="border rounded-3 p-2 m-1">
+    <div class="d-flex w-100 justify-content-center">
+        <div class="align-items-center">
+            <h4 class="w-100 fw-bold text-primary">Select a student to manage</h4>
+            <hr>
+        </div>
+    </div>
+
+    <div class="input-group w-50">
+      <input type="text" class="form-control" placeholder="Search...">
+      <button id="btn-search" class="btn btn-primary ms-2" type="button">Search</button>
+      <button id="btn-create" class="btn btn-success ms-2" type="button">New Student</button>
+    </div>
+    <br>
+    <div id="divStudentsList" style="" class="px-3 border rounded w-100 mx-auto">
+        <table id="studentListTable" class="table cell-border table-striped table-hover">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Badge Number</th>
+                    <th>Student Name</th>
+                    <th>Rank</th>
+                </tr>
+            </thead>
+            <tbody id="studentListTBbody">
+                {% for student_record in student_records %}
+                <tr class="student_edit_click"
+                    style="cursor:pointer;"
+                    data-badgeNumber="{{ student_record.badgeNumber }}"
+                    onclick="showStudentEditDialog(this);"
+                    >
+                    <td>
+                        <img id="studentImage"
+                             src=data:image/{{student_record.studentImageType}};base64,{{student_record.studentImageBase64}}
+                             alt="No image found"
+                             height=50
+                             width=auto
+                        />
+                    </td>
+                    <td >{{ student_record.badgeNumber }}</td>
+                    <td>{{ student_record.firstName }} {{ student_record.lastName }}</td>
+                    <td>{{ student_record.currentRankName }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ super() }} {# This calls the parent block's content if any #}
+    <script src="{{ url_for('static', filename='scripts/student_edit.js') }}"></script>
+    <script>
+        window.onload = function(){
+            console.log("Students list window has been loaded");
+        };
+    </script>
+{% endblock %}

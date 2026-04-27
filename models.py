@@ -8,6 +8,19 @@ from sqlalchemy.sql.sqltypes import NullType
 class Base(DeclarativeBase):
     pass
 
+class Assets(Base):
+    __tablename__ = 'assets'
+    __table_args__ = (
+        Index('assets_imageName_IDX', 'imageName', unique=True),
+    )
+
+    imageName:   Mapped[str] = mapped_column(Text, nullable=False)
+    imageBase64: Mapped[str] = mapped_column(Text, nullable=False)
+    imageId:     Mapped[Optional[int]] = mapped_column(Integer, primary_key=True)
+    imageBytes:  Mapped[Optional[bytes]] = mapped_column(LargeBinary)
+    imageType:   Mapped[Optional[str]] = mapped_column(Text)
+    createDateTime: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    updateDateTime: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
 class Belts(Base):
     __tablename__ = 'belts'
@@ -22,18 +35,6 @@ class Belts(Base):
     stripeCount:    Mapped[Optional[int]] = mapped_column(Integer)
     createDateTime: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     updateDateTime: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-#    requirements:   Mapped[list['Requirements']] = relationship('Requirements', back_populates='belts')
-
-# class Requirements(Base):
-#     __tablename__ = 'requirements'
-#     __table_args__ = (
-#         Index('requirements_stripeTitle_IDX', 'stripeTitle', unique=True),
-#     )
-#     requirementId: Mapped[Optional[int]] = mapped_column(Integer, primary_key=True)
-#     beltId: Mapped[Optional[int]] = mapped_column(ForeignKey('belts.beltId'))
-#     stripeTitle: Mapped[Optional[str]] = mapped_column(Text)
-#     requiredClasses: Mapped[Optional[int]] = mapped_column(Integer)
-#     belts: Mapped[Optional['Belts']] = relationship('Belts', back_populates='requirements')
 
 class Promotions(Base):
     __tablename__ = 'promotions'
@@ -55,7 +56,6 @@ class Promotions(Base):
     createDateTime:  Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     updateDateTime:  Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
-
 class Stripes(Base):
     __tablename__ = 'stripes'
 
@@ -66,7 +66,6 @@ class Stripes(Base):
     seqNum:     Mapped[Optional[int]] = mapped_column(Integer)
     createDateTime:     Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     updateDateTime:     Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-
 
 class Students(Base):
     __tablename__ = 'students'
@@ -101,7 +100,6 @@ class Students(Base):
     currentStripeName:  Mapped[Optional[str]] = mapped_column(Text)
     createDateTime:     Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     updateDateTime:     Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-
 
 class Classes(Base):
     __tablename__ = 'classes'
@@ -162,6 +160,28 @@ class EligibilityCounts(Base):
     eligibleCount:   Mapped[Optional[int]] = mapped_column(Integer)
     createDateTime:  Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     updateDateTime:  Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+class Styles(Base):
+    __tablename__ = 'styles'
+
+    styleNum:       Mapped[int] = mapped_column(Integer, primary_key=True)
+    styleName:      Mapped[Optional[str]] = mapped_column(Text)
+    createDateTime: Mapped[Optional[str]] = mapped_column(Text)
+    updateDateTime: Mapped[Optional[str]] = mapped_column(Text)
+
+class ZipCodes(Base):
+    __tablename__ = 'zipCodes'
+    __table_args__ = (
+        Index('zipCode3_u1', 'physicalZip', 'physicalZip4'),
+    )
+
+    recordid: Mapped[int] = mapped_column(Integer, primary_key=True)
+    physicalCity: Mapped[Optional[str]] = mapped_column(Text)
+    physicalState: Mapped[Optional[str]] = mapped_column(Text)
+    physicalZip: Mapped[Optional[str]] = mapped_column(Text)
+    physicalZip4: Mapped[Optional[str]] = mapped_column(Text)
+    createDateTime: Mapped[Optional[str]] = mapped_column(Text)
+    updateDateTime: Mapped[Optional[str]] = mapped_column(Text)
 
 # class VwEligibilityCounts(Base):
 #     __tablename__ = 'vw_elgibility_counts'      # Name of the view in SQLite
