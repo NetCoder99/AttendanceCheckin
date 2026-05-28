@@ -1,7 +1,6 @@
 # pyinstaller --add-data "templates;templates" --add-data "static;static" AttendanceCheckin.py
 
-from flask import Flask, render_template, request
-from flaskwebgui import FlaskUI
+from flask import Flask, render_template
 #from sqlalchemy import select, func
 
 from classes.checkin_procs import getCheckinMessage, CheckinMain
@@ -16,7 +15,7 @@ from classes.imports.import_students import importStudents
 from classes.imports.import_table import importTable
 from classes.ranks_procs import getRanksMessage, getBadgeMessage, get_stripes_func, show_student_ranks_func, update_required_rank_func
 from classes.sqlite_procs import getDbSession
-from classes.student_procs import displayAllStudents
+from classes.students.student_procs import displayAllStudents
 from classes.table_procs import displayAllTables
 # from models import Students, EligibilityCounts, Attendance
 
@@ -132,60 +131,12 @@ def badge_checkin():
     print(f'badge_checkin was invoked')
     try:
         return CheckinMain()
-        # badge_number = request.form['badgeNumber']
-        #
-        # # check for valid badge format
-        # if not badge_number: return getCheckinMessage("error", "Badge number can not be blank!")
-        # if not badge_number.isdigit(): return getCheckinMessage("error", "Badge number must be all digits!")
-        #
-        # # check the badge matches a student record
-        # student_record = db_session.query(Students).filter_by(badgeNumber=badge_number).first()
-        # if not student_record: return getCheckinMessage("error", "Student record not found!")
-        #
-        # # check for multiple checkin actions
-        #
-        # # get the current class and insert the attendance record
-        # selected_class = GetCurrentClass()
-        # InsertAttendanceRecord(student_record, selected_class)
-        #
-        # # if the student does not have a rank entry, display the select rank dialog
-        # if not student_record.currentRankNum:
-        #     return show_student_ranks_func()
-        #
-        # # get next promotion eligibility fields
-        # class_count_stmt    = select(func.count()).where(Attendance.badgeNumber == badge_number)
-        # student_class_count = db_session.scalar(class_count_stmt)
-        #
-        # eligibility_records = (db_session
-        #                     .query(EligibilityCounts)
-        #                     .where(EligibilityCounts.eligibleCount > student_class_count)
-        #                     .order_by(EligibilityCounts.eligibleCount.asc())
-        #                     .first())
-        #
-        # #  fetch the next promotion counts and message
-        # classes_until_next = eligibility_records.eligibleCount - student_class_count
-        # eligible_message = f'{classes_until_next} classes until eligible for {eligibility_records.stripeTitle}'
-        #
-        # # save the image to static directory, let html fetch large files
-        # student_image_name = SaveStudentImage(student_record)
-        # student_image_url  = f"/static/images/{student_image_name}"
-        # return getCheckinPanel(
-        #     'success',
-        #     'Checkin was completed',
-        #     student_image_url,
-        #     student_record,
-        #     selected_class,
-        #     promotion_message=eligible_message
-        # )
-
     except Exception as ex:
         print(str(ex))
         return getCheckinMessage('error', str(ex))
-
-
 
 if __name__ == '__main__':
     #list_processes("attendance")
     #ui = FlaskUI(app=app, width=1250, height=900, fullscreen=False, server='flask')
     #ui.run()
-    app.run()
+    app.run(debug=False,  port=5002)
