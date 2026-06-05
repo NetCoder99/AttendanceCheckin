@@ -1,5 +1,7 @@
 # pyinstaller --add-data "templates;templates" --add-data "static;static" AttendanceCheckin.py
 
+# sqlacodegen sqlite:///C:\Users\jdugger01\AppData\Roaming\Attendance\AttendanceV3.db --tables requirements > requirements.py
+
 from flask import Flask, render_template
 #from sqlalchemy import select, func
 
@@ -89,6 +91,11 @@ def import_styles():
 @app.route('/import_zipcodes')
 def import_zipcodes():
     import_counts = importTable("AttendanceV2.db", "AttendanceV3.db", "ZipCodes")
+    return import_counts
+
+@app.route('/import_requirements')
+def import_requirements():
+    import_counts = importTable("AttendanceV2.db", "AttendanceV3.db", "Requirements")
     return import_counts
 
 # --------------------------------------------------------------------

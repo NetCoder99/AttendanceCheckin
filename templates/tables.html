@@ -91,6 +91,15 @@
                 hx-on::before-request="resetImportResponse()"
                 >Import ZipCodes</button>
         </li>
+        <li>
+            <button type="button"
+                id="importRequirements"
+                hx-get="/import_requirements"
+                hx-target="#import_response"
+                hx-swap="innerHTML"
+                hx-on::before-request="resetImportResponse()"
+                >Import Requirements</button>
+        </li>
     </ul>
     <div id="import_response">
 

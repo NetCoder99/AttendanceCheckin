@@ -183,6 +183,18 @@ class ZipCodes(Base):
     createDateTime: Mapped[Optional[str]] = mapped_column(Text)
     updateDateTime: Mapped[Optional[str]] = mapped_column(Text)
 
+class Requirements(Base):
+    __tablename__ = 'requirements'
+
+    requirementId: Mapped[Optional[int]] = mapped_column(Integer, primary_key=True)
+    beltId: Mapped[Optional[int]] = mapped_column(ForeignKey('belts.beltId'))
+    stripeTitle: Mapped[Optional[str]] = mapped_column(Text)
+    requiredClasses: Mapped[Optional[int]] = mapped_column(Integer)
+    createDateTime: Mapped[Optional[str]] = mapped_column(Text)
+    updateDateTime: Mapped[Optional[str]] = mapped_column(Text)
+
+    #belts: Mapped[Optional['Belts']] = relationship('Belts', back_populates='requirements')
+
 # class VwEligibilityCounts(Base):
 #     __tablename__ = 'vw_elgibility_counts'      # Name of the view in SQLite
 #     rowNum = Column(Integer, primary_key=True)  # Map an existing unique column
