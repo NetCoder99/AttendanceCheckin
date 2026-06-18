@@ -3,6 +3,8 @@
 # sqlacodegen sqlite:///C:\Users\jdugger01\AppData\Roaming\Attendance\AttendanceV3.db --tables requirements > requirements.py
 
 from flask import Flask, render_template
+from flaskwebgui import FlaskUI
+
 #from sqlalchemy import select, func
 
 from classes.checkin_procs import getCheckinMessage, CheckinMain

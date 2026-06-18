@@ -11,7 +11,7 @@ from flask_htmx import make_response
 from classes.ranks_procs import show_student_ranks_func
 from classes.sqlite_procs import getDbSession
 from models import Classes, Attendance, Students, EligibilityCounts
-from sqlalchemy import select, func
+from sqlalchemy import select, func, text
 
 # ------------------------------------------------------------------------------------------
 db_session = getDbSession()
@@ -39,19 +39,7 @@ def CheckinMain():
         if not student_record.currentRankNum:
             return show_student_ranks_func()
 
-        # get next promotion eligibility fields
-        class_count_stmt    = select(func.count()).where(Attendance.badgeNumber == badge_number)
-        student_class_count = db_session.scalar(class_count_stmt)
-
-        eligibility_records = (db_session
-                            .query(EligibilityCounts)
-                            .where(EligibilityCounts.eligibleCount > student_class_count)
-                            .order_by(EligibilityCounts.eligibleCount.asc())
-                            .first())
-
-        #  fetch the next promotion counts and message
-        classes_until_next = eligibility_records.eligibleCount - student_class_count
-        eligible_message = f'{classes_until_next} classes until eligible for {eligibility_records.stripeTitle}'
+        eligible_message = GetPromotionMessage(student_record)
 
         # save the image to static directory, let html fetch large files
         student_image_name = SaveStudentImage(student_record)
@@ -69,11 +57,45 @@ def CheckinMain():
         print(str(ex))
         return getCheckinMessage('error', str(ex))
 
+def GetPromotionMessage(student_record: Students) -> str:
+    # get next promotion eligibility fields
+    class_count_stmt = select(func.count()).where(Attendance.badgeNumber == student_record.badgeNumber)
+    student_class_count = db_session.scalar(class_count_stmt)
+
+    # if student rank exceeds class count required, show no class count message
+    eligibility_counts = (db_session.execute(GetEligibilityCountsQuery(), {"badgeNumber": student_record.badgeNumber})).scalar()
+    for row in eligibility_counts:
+        print(f"badgeNumber: {row.badgeNumber}, classCount: {row.classCount}")
+
+    eligibility_records = (db_session
+                           .query(EligibilityCounts)
+                           .where(EligibilityCounts.eligibleCount > student_class_count)
+                           .order_by(EligibilityCounts.eligibleCount.asc())
+                           .first())
+    #  fetch the next promotion counts and message
+    classes_until_next = eligibility_records.eligibleCount - student_class_count
+    eligible_message = f'{classes_until_next} classes until eligible for {eligibility_records.stripeTitle}'
+    return eligible_message
 
 
+def GetEligibilityCountsQuery() -> text:
+    return text('''
+select a.badgeNumber, 
+       count(*) as classCount,
+       s.currentRankNum,
+       s.currentRankName,
+       r.TotalRequiredClasses
+from   attendance  a
+join   students    s
+  on   a.badgeNumber = s.badgeNumber
+join   ranks       r
+  on   r.beltId    = s.currentRankNum  
+where  a.badgeNumber = :badgeNumber
+order  by a.badgeNumber
+    ''')
 
 # --------------------------------------------------------------------
-# Search for class within the start and stop times
+# Search for a class within the start and stop times
 # --------------------------------------------------------------------
 def GetCurrentClass():
     ## day of week in db starts with Sunday = 0, ends with Saturday = 6
@@ -82,7 +104,6 @@ def GetCurrentClass():
 
     #class_times = Classes.objects.filter(class_day_of_week=today).order_by('class_start_time')
     class_times = db_session.query(Classes).filter_by(classDayOfWeek=today)
-
 
     current_date = datetime.now()
     current_date_str = current_date.strftime("%m/%d/%Y")
