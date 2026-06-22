@@ -42,6 +42,10 @@ def tables():
 def students():
     return displayAllStudents()
 
+@app.route('/attendance')
+def attendance():
+    return displayAllStudents()
+
 @app.route('/about')
 def about():
     return render_template('about.html')

@@ -20,9 +20,12 @@
             <li class="nav-item {% if request.path == url_for('checkin') %}active{% endif %}">
               <a class="nav-link" href="{{ url_for('checkin') }}">Checkin</a>
             </li>
-<!--            <li class="nav-item {% if request.path == url_for('students') %}active{% endif %}">-->
-<!--              <a class="nav-link" href="{{ url_for('students') }}">Students</a>-->
-<!--            </li>-->
+            <li class="nav-item {% if request.path == url_for('students') %}active{% endif %}">
+              <a class="nav-link" href="{{ url_for('students') }}">Students</a>
+            </li>
+            <li class="nav-item {% if request.path == url_for('attendance') %}active{% endif %}">
+              <a class="nav-link" href="{{ url_for('attendance') }}">Attendance</a>
+            </li>
             <li class="nav-item {% if request.path == url_for('tables') %}active{% endif %}">
               <a class="nav-link" href="{{ url_for('tables') }}">Tables</a>
             </li>

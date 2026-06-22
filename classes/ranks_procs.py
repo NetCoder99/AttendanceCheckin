@@ -1,9 +1,12 @@
 from flask import render_template, request
 from flask_htmx import make_response
 
+import constants
 from classes.sqlite_procs import getDbSession
 from models import Belts, Stripes, Students, Promotions, Attendance, EligibilityCounts
 from datetime import datetime
+from dateutil.parser import parse, ParserError
+
 from sqlalchemy import select, literal, func
 
 # ------------------------------------------------------------------------------------------
@@ -81,12 +84,13 @@ def show_student_ranks_func():
     # render the modal form
     modal_rank = render_template(
         "partials/modal_rank.html",
-        badge_number=student_record.badgeNumber,
-        student_name=f'{student_record.firstName} {student_record.lastName}',
-        belts_list=belts_list,
-        stripes_list=stripes_list,
-        current_rank_num=student_record.currentRankNum,
-        current_stripe_id=student_record.currentStripeId,
+        badge_number = student_record.badgeNumber,
+        student_name = f'{student_record.firstName} {student_record.lastName}',
+        belts_list   = belts_list,
+        stripes_list = stripes_list,
+        current_rank_num  =student_record.currentRankNum,
+        current_stripe_id =student_record.currentStripeId,
+        promotion_date = datetime.now().strftime("%Y-%m-%d")
     )
 
     # tell the ui to show the modal
@@ -97,7 +101,7 @@ def show_student_ranks_func():
     return response
 
 def update_required_rank_func():
-    print(f'update_required_rank was invoked')
+    print(f'update_required_rank_func was invoked')
     badge_number = request.form['badge_number']
     # check for valid badge format
     if not badge_number:           return getRanksMessage("error", "Badge number can not be blank!")
@@ -124,7 +128,13 @@ def update_required_rank_func():
     stripe_record = db_session.query(Stripes).filter_by(stripeId=selected_stripe_id).first()
     if not stripe_record: return getRanksMessage("error", "Stripe record not found!")
 
-    update_student_rank(student_record, belt_record, stripe_record)
+    # check if the date field was filled in ...
+    belt_promotion_str = datetime.now().strftime(constants.fmtDateTime)
+    if len(request.form['id_belt_date']) > 0:
+        belt_promotion     = parse(request.form['id_belt_date'], fuzzy=False)
+        belt_promotion_str = datetime.strftime(belt_promotion, constants.fmtDateTime)
+
+    update_student_rank(student_record, belt_record, stripe_record, belt_promotion_str)
     return getRanksMessage('completed', 'Student rank was updated!')
 
 
@@ -172,17 +182,17 @@ def reset_student_rank(student_record: Students):
     insert_promotions_table(student_record, belt_record, stripe_record, "Rank was reset")
 
 
-def update_student_rank(student_record: Students, belt_record: Belts, stripe_record: Stripes):
+def update_student_rank(student_record: Students, belt_record: Belts, stripe_record: Stripes, promotion_date_str: str):
     print(f'updating badge number:{student_record.badgeNumber} to {belt_record.beltId} / {belt_record.beltTitle}')
     student_record.currentRankNum    = belt_record.beltId
     student_record.currentRankName   = belt_record.beltTitle
     student_record.currentStripeId   = stripe_record.stripeId
     student_record.currentStripeName = stripe_record.stripeName
     db_session.commit()
-    insert_promotions_table(student_record, belt_record, stripe_record, "Rank was updated")
+    insert_promotions_table(student_record, belt_record, stripe_record, promotion_date_str, "Rank was updated")
 
 
-def insert_promotions_table(student_record, belt_record, stripe_record, comments: str = "Promotion"):
+def insert_promotions_table(student_record, belt_record, stripe_record, promotion_date_str, comments: str = "Promotion"):
     promotion_record = Promotions()
     promotion_record.badgeNumber      = student_record.badgeNumber
     promotion_record.studentFirstName = student_record.firstName
@@ -191,7 +201,7 @@ def insert_promotions_table(student_record, belt_record, stripe_record, comments
     promotion_record.beltTitle        = belt_record.beltTitle
     promotion_record.stripeId         = stripe_record.stripeId
     promotion_record.stripeTitle      = stripe_record.stripeName
-    promotion_record.promotionDate    = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    promotion_record.promotionDate    = promotion_date_str #datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     promotion_record.comments         = comments
     db_session.add(promotion_record)
     db_session.commit()
