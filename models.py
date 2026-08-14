@@ -53,6 +53,7 @@ class Promotions(Base):
     studentFirstName: Mapped[Optional[str]] = mapped_column(Text)
     studentLastName: Mapped[Optional[str]] = mapped_column(Text)
     comments: Mapped[Optional[str]] = mapped_column(Text)
+    promotionType: Mapped[Optional[str]] = mapped_column(Text)
     createDateTime:  Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     updateDateTime:  Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
@@ -97,9 +98,10 @@ class Students(Base):
     currentRankNum:     Mapped[Optional[int]] = mapped_column(Integer)
     currentRankName:    Mapped[Optional[str]] = mapped_column(Text)
     currentStripeId:    Mapped[Optional[int]] = mapped_column(Integer)
-    currentStripeName:  Mapped[Optional[str]] = mapped_column(Text)
-    createDateTime:     Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    updateDateTime:     Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    currentStripeName:    Mapped[Optional[str]] = mapped_column(Text)
+    studentPromotionDate: Mapped[Optional[str]] = mapped_column(Text)
+    createDateTime:       Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    updateDateTime:       Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
 class Classes(Base):
     __tablename__ = 'classes'
@@ -131,6 +133,7 @@ class Attendance(Base):
     badgeNumber:      Mapped[Optional[int]] = mapped_column(Integer)
     checkinDateTime:  Mapped[Optional[str]] = mapped_column(Text)
     checkinDate:      Mapped[Optional[str]] = mapped_column(Text)
+    checkinDayOfWeek: Mapped[Optional[int]] = mapped_column(Integer)
     checkinTime:      Mapped[Optional[str]] = mapped_column(Text)
     studentFirstName: Mapped[Optional[str]] = mapped_column(Text)
     studentLastName:  Mapped[Optional[str]] = mapped_column(Text)
@@ -188,12 +191,15 @@ class Requirements(Base):
 
     requirementId: Mapped[Optional[int]] = mapped_column(Integer, primary_key=True)
     beltId: Mapped[Optional[int]] = mapped_column(ForeignKey('belts.beltId'))
+    beltTitle: Mapped[Optional[str]] = mapped_column(Text)
+    stripeId: Mapped[Optional[int]] = mapped_column(Integer)
     stripeTitle: Mapped[Optional[str]] = mapped_column(Text)
+    stripeSeqNum: Mapped[Optional[int]] = mapped_column(Integer)
+    classesCount: Mapped[Optional[int]] = mapped_column(Integer)
     requiredClasses: Mapped[Optional[int]] = mapped_column(Integer)
+    promotionSeqNum: Mapped[Optional[int]] = mapped_column(Integer)
     createDateTime: Mapped[Optional[str]] = mapped_column(Text)
     updateDateTime: Mapped[Optional[str]] = mapped_column(Text)
-
-    #belts: Mapped[Optional['Belts']] = relationship('Belts', back_populates='requirements')
 
 # class VwEligibilityCounts(Base):
 #     __tablename__ = 'vw_elgibility_counts'      # Name of the view in SQLite
@@ -205,3 +211,21 @@ class Requirements(Base):
 #     classCount      = Column(Integer)
 #     eligibleCount   = Column(Integer)
 
+class NextPromotion:
+    current_requirement_record    : Requirements
+    next_requirement_record       : Requirements
+    belt_records                  : list[Belts]
+    stripe_records                : list[Stripes]
+    last_belt_promotion_date      : datetime
+    last_stripe_promotion_date    : datetime
+    attendance_count_total        : int
+    attendance_count_since_belt   : int
+    attendance_count_since_stripe : int
+    attendance_count_since_last   : int
+    classes_remaining_from_base   : int
+    classes_remaining_from_belt   : int
+    classes_remaining_from_stripe : int
+    classes_until_from_total      : int
+    classes_until_from_belt       : int
+    classes_until_from_stripe     : int
+    promotion_message             : str

@@ -8,6 +8,7 @@ from PIL import Image
 from flask import current_app, render_template, request
 from flask_htmx import make_response
 
+from classes.promotions_procs import GetNextPromotionDetails
 from classes.ranks_procs import show_student_ranks_func
 from classes.sqlite_procs import getDbSession
 from models import Classes, Attendance, Students, EligibilityCounts
@@ -30,10 +31,21 @@ def CheckinMain():
         if not student_record: return getCheckinMessage("error", "Student record not found!")
 
         # check for multiple checkin actions, on a single day
+        daily_checkin_count_stmt = (select(func.count())
+                               .select_from(Attendance)
+                               .where(Attendance.badgeNumber == student_record.badgeNumber)
+                               )
+        daily_checkin_count = db_session.scalar(daily_checkin_count_stmt)
+        # if daily_checkin_count > 0: return getCheckinMessage("error", "Already checked in for today!")
+
+
+        ## day of week in db starts with Sunday = 0, ends with Saturday = 6
+        ## add 1 to adjust for that
+        day_of_week = datetime.now().date().weekday() + 1
 
         # get the current class and insert the attendance record
-        selected_class = GetCurrentClass()
-        InsertAttendanceRecord(student_record, selected_class)
+        selected_class = GetCurrentClass(day_of_week)
+        InsertAttendanceRecord(student_record, selected_class, day_of_week)
 
         # if the student does not have a rank entry, display the select rank dialog
         if not student_record.currentRankNum:
@@ -58,25 +70,31 @@ def CheckinMain():
         return getCheckinMessage('error', str(ex))
 
 def GetPromotionMessage(student_record: Students) -> str:
-    # get next promotion eligibility fields
-    class_count_stmt = select(func.count()).where(Attendance.badgeNumber == student_record.badgeNumber)
-    student_class_count = db_session.scalar(class_count_stmt)
+    try:
+        next_promotion_record = GetNextPromotionDetails(student_record)
 
-    # if student rank exceeds class count required, show no class count message
-    eligibility_counts = (db_session.execute(GetEligibilityCountsQuery(), {"badgeNumber": student_record.badgeNumber})).scalar()
-    for row in eligibility_counts:
-        print(f"badgeNumber: {row.badgeNumber}, classCount: {row.classCount}")
 
-    eligibility_records = (db_session
-                           .query(EligibilityCounts)
-                           .where(EligibilityCounts.eligibleCount > student_class_count)
-                           .order_by(EligibilityCounts.eligibleCount.asc())
-                           .first())
-    #  fetch the next promotion counts and message
-    classes_until_next = eligibility_records.eligibleCount - student_class_count
-    eligible_message = f'{classes_until_next} classes until eligible for {eligibility_records.stripeTitle}'
-    return eligible_message
+        # get next promotion eligibility fields
+        class_count_stmt = select(func.count()).where(Attendance.badgeNumber == student_record.badgeNumber)
+        student_class_count = db_session.scalar(class_count_stmt)
 
+        # if student rank exceeds class count required, show no class count message
+        eligibility_counts = (db_session.execute(GetEligibilityCountsQuery(), {"badgeNumber": student_record.badgeNumber})) #.scalar()
+        for row in eligibility_counts:
+            print(f"badgeNumber: {row.badgeNumber}, classCount: {row.classCount}")
+
+        eligibility_records = (db_session
+                               .query(EligibilityCounts)
+                               .where(EligibilityCounts.eligibleCount > student_class_count)
+                               .order_by(EligibilityCounts.eligibleCount.asc())
+                               .first())
+        #  fetch the next promotion counts and message
+        classes_until_next = eligibility_records.eligibleCount - student_class_count
+        #eligible_message = f'{classes_until_next} classes until eligible for {eligibility_records.stripeTitle}'
+        eligible_message = next_promotion_record.promotion_message
+        return eligible_message
+    except Exception as ex:
+        print(f'Error: {str(ex)}')
 
 def GetEligibilityCountsQuery() -> text:
     return text('''
@@ -97,13 +115,9 @@ order  by a.badgeNumber
 # --------------------------------------------------------------------
 # Search for a class within the start and stop times
 # --------------------------------------------------------------------
-def GetCurrentClass():
-    ## day of week in db starts with Sunday = 0, ends with Saturday = 6
-    ## add 1 to adjust for that
-    today = datetime.now().date().weekday() + 1
-
+def GetCurrentClass(day_of_week: int):
     #class_times = Classes.objects.filter(class_day_of_week=today).order_by('class_start_time')
-    class_times = db_session.query(Classes).filter_by(classDayOfWeek=today)
+    class_times = db_session.query(Classes).filter_by(classDayOfWeek=day_of_week)
 
     current_date = datetime.now()
     current_date_str = current_date.strftime("%m/%d/%Y")
@@ -120,7 +134,7 @@ def GetCurrentClass():
 # --------------------------------------------------------------------
 # Insert the attendance checkin record
 # --------------------------------------------------------------------
-def InsertAttendanceRecord(student_record: Students, class_record: Classes):
+def InsertAttendanceRecord(student_record: Students, class_record: Classes, day_of_week: int):
     currentTime     = datetime.now()
     checkinDateTime = currentTime.strftime("%Y-%m-%d %H:%M:%S")
     checkinDate     = currentTime.strftime("%m/%d/%Y")
@@ -128,6 +142,7 @@ def InsertAttendanceRecord(student_record: Students, class_record: Classes):
 
     attendance_record = Attendance()
     attendance_record.badgeNumber       = student_record.badgeNumber
+    attendance_record.checkinDayOfWeek  = day_of_week
     attendance_record.checkinDateTime   = checkinDateTime
     attendance_record.checkinDate       = checkinDate
     attendance_record.checkinTime       = checkinTime
@@ -198,7 +213,7 @@ def getCheckinPanel(
     try:
         alert_class    = "text-danger" #  if status == 'error' else ""
         if selected_class:
-            badge_message  = f'{student_record.firstName} {student_record.lastName} has checked in to {selected_class.className}'
+            badge_message  = f'{student_record.firstName} {student_record.lastName} checked in to {selected_class.className}'
         else:
             badge_message  = f'{student_record.firstName} {student_record.lastName} not checked in, no class at this time.'
 
