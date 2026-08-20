@@ -1,15 +1,16 @@
 # pyinstaller --add-data "templates;templates" --add-data "static;static" AttendanceCheckin.py
+# pyinstaller --add-data "templates:templates" --add-data "static:static" AttendanceCheckin.py
+# rsync -av --exclude '.venv' --exclude 'dist'  /home/johnd/AttendanceTracker/AttendancePromotions /media/johnd/USB31FD/PythonProjects/AttendancePromotions
 
 # sqlacodegen sqlite:///C:\Users\jdugger01\AppData\Roaming\Attendance\AttendanceV3.db --tables requirements > requirements.py
 
 from flask import Flask, render_template
 from flaskwebgui import FlaskUI
+import tkinter as tk
+from tkinter import messagebox
 
-#from sqlalchemy import select, func
-
+import constants
 from classes.checkin_procs import getCheckinMessage, CheckinMain
-    # , GetCurrentClass, InsertAttendanceRecord, SaveStudentImage, \
-    # getCheckinPanel, CheckinMain
 from classes.imports.import_belts import importBelts
 from classes.imports.import_classes import importClasses
 from classes.imports.import_eligibilty import importEligibility
@@ -17,11 +18,11 @@ from classes.imports.import_promotions import importPromotions
 from classes.imports.import_stripes import  importStripes
 from classes.imports.import_students import importStudents
 from classes.imports.import_table import importTable
+from classes.processScanner import DisplayActiveProcesses, IsProcessActive
 from classes.ranks_procs import getRanksMessage, getBadgeMessage, get_stripes_func, show_student_ranks_func, update_required_rank_func
 from classes.sqlite_procs import getDbSession
 from classes.students.student_procs import displayAllStudents
 from classes.table_procs import displayAllTables
-# from models import Students, EligibilityCounts, Attendance
 
 app = Flask(__name__)
 #app.config['EXPLAIN_TEMPLATE_LOADING'] = True
@@ -149,7 +150,15 @@ def badge_checkin():
         return getCheckinMessage('error', str(ex))
 
 if __name__ == '__main__':
-    #list_processes("attendance")
-    #ui = FlaskUI(app=app, width=1250, height=900, fullscreen=False, server='flask')
-    #ui.run()
-    app.run(debug=False,  port=5002)
+    DisplayActiveProcesses('attendance')
+    ok_to_start = IsProcessActive(constants.applicationName)
+
+    if ok_to_start['status'] == 'ok':
+        ui = FlaskUI(app=app, width=1250, height=900, fullscreen=False, server='flask')
+        ui.run()
+    else:
+        root = tk.Tk()
+        root.withdraw()
+        messagebox.showinfo("AttendanceCheckin - Error", ok_to_start['message'])
+        print(ok_to_start['message'])
+    #app.run(debug=False,  port=5002)
