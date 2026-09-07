@@ -11,13 +11,6 @@ from tkinter import messagebox
 
 import constants
 from classes.checkin_procs import getCheckinMessage, CheckinMain
-from classes.imports.import_belts import importBelts
-from classes.imports.import_classes import importClasses
-from classes.imports.import_eligibilty import importEligibility
-from classes.imports.import_promotions import importPromotions
-from classes.imports.import_stripes import  importStripes
-from classes.imports.import_students import importStudents
-from classes.imports.import_table import importTable
 from classes.processScanner import DisplayActiveProcesses, IsProcessActive
 from classes.ranks_procs import getRanksMessage, getBadgeMessage, get_stripes_func, show_student_ranks_func, update_required_rank_func
 from classes.sqlite_procs import getDbSession
@@ -35,75 +28,75 @@ db_session = getDbSession()
 def checkin():
     return render_template('checkin.html')
 
-@app.route('/tables')
-def tables():
-    return displayAllTables()
+# @app.route('/tables')
+# def tables():
+#     return displayAllTables()
+#
+# @app.route('/students')
+# def students():
+#     return displayAllStudents()
+#
+# @app.route('/attendance')
+# def attendance():
+#     return displayAllStudents()
+#
+# @app.route('/about')
+# def about():
+#     return render_template('about.html')
 
-@app.route('/students')
-def students():
-    return displayAllStudents()
 
-@app.route('/attendance')
-def attendance():
-    return displayAllStudents()
-
-@app.route('/about')
-def about():
-    return render_template('about.html')
-
-
-# --------------------------------------------------------------------
-# Misc import actions
-# --------------------------------------------------------------------
-@app.route('/import_students')
-def import_students():
-    import_counts = importStudents("AttendanceV2.db", "AttendanceV3.db")
-    return import_counts
-
-@app.route('/import_belts')
-def import_belts():
-    import_counts = importBelts("AttendanceV2.db", "AttendanceV3.db")
-    return import_counts
-
-@app.route('/import_classes')
-def import_classes():
-    import_counts = importClasses("AttendanceV2.db", "AttendanceV3.db")
-    return import_counts
-
-@app.route('/import_eligibility')
-def import_eligibility():
-    import_counts = importEligibility("AttendanceV2.db", "AttendanceV3.db")
-    return import_counts
-
-@app.route('/import_promotions')
-def import_promotions():
-    import_counts = importPromotions("AttendanceV2.db", "AttendanceV3.db")
-    return import_counts
-
-@app.route('/import_stripes')
-def import_stripes():
-    import_counts = importStripes("AttendanceV2.db", "AttendanceV3.db")
-    return import_counts
-
-@app.route('/import_assets')
-def import_assets():
-    import_counts = importTable("AttendanceV2.db", "AttendanceV3.db", "Assets")
-    return import_counts
-
-@app.route('/import_styles')
-def import_styles():
-    import_counts = importTable("AttendanceV2.db", "AttendanceV3.db", "Styles")
-    return import_counts
-
-@app.route('/import_zipcodes')
-def import_zipcodes():
-    import_counts = importTable("AttendanceV2.db", "AttendanceV3.db", "ZipCodes")
-    return import_counts
-
-@app.route('/import_requirements')
-def import_requirements():
-    import_counts = importTable("AttendanceV2.db", "AttendanceV3.db", "Requirements")
-    return import_counts
+# # --------------------------------------------------------------------
+# # Misc import actions
+# # --------------------------------------------------------------------
+# @app.route('/import_students')
+# def import_students():
+#     import_counts = importStudents("AttendanceV2.db", "AttendanceV3.db")
+#     return import_counts
+#
+# @app.route('/import_belts')
+# def import_belts():
+#     import_counts = importBelts("AttendanceV2.db", "AttendanceV3.db")
+#     return import_counts
+#
+# @app.route('/import_classes')
+# def import_classes():
+#     import_counts = importClasses("AttendanceV2.db", "AttendanceV3.db")
+#     return import_counts
+#
+# @app.route('/import_eligibility')
+# def import_eligibility():
+#     import_counts = importEligibility("AttendanceV2.db", "AttendanceV3.db")
+#     return import_counts
+#
+# @app.route('/import_promotions')
+# def import_promotions():
+#     import_counts = importPromotions("AttendanceV2.db", "AttendanceV3.db")
+#     return import_counts
+#
+# @app.route('/import_stripes')
+# def import_stripes():
+#     import_counts = importStripes("AttendanceV2.db", "AttendanceV3.db")
+#     return import_counts
+#
+# @app.route('/import_assets')
+# def import_assets():
+#     import_counts = importTable("AttendanceV2.db", "AttendanceV3.db", "Assets")
+#     return import_counts
+#
+# @app.route('/import_styles')
+# def import_styles():
+#     import_counts = importTable("AttendanceV2.db", "AttendanceV3.db", "Styles")
+#     return import_counts
+#
+# @app.route('/import_zipcodes')
+# def import_zipcodes():
+#     import_counts = importTable("AttendanceV2.db", "AttendanceV3.db", "ZipCodes")
+#     return import_counts
+#
+# @app.route('/import_requirements')
+# def import_requirements():
+#     import_counts = importTable("AttendanceV2.db", "AttendanceV3.db", "Requirements")
+#     return import_counts
 
 # --------------------------------------------------------------------
 # Update stripe dropdown on Belt Id change event
