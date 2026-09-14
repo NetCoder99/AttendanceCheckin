@@ -1,11 +1,13 @@
+import traceback
+
 from flask import render_template, request
 from flask_htmx import make_response
 
 import constants
 from classes.sqlite_procs import getDbSession
-from models import Belts, Stripes, Students, Promotions, Attendance, EligibilityCounts
+from models.models import Belts, Stripes, Students, Promotions, Attendance, EligibilityCounts
 from datetime import datetime
-from dateutil.parser import parse, ParserError
+from dateutil.parser import parse
 
 from sqlalchemy import select, literal, func
 
@@ -183,14 +185,19 @@ def reset_student_rank(student_record: Students):
 
 
 def update_student_rank(student_record: Students, belt_record: Belts, stripe_record: Stripes, promotion_date_str: str):
-    print(f'updating badge number:{student_record.badgeNumber} to {belt_record.beltId} / {belt_record.beltTitle}')
-    student_record.currentRankNum    = belt_record.beltId
-    student_record.currentRankName   = belt_record.beltTitle
-    student_record.currentStripeId   = stripe_record.stripeId
-    student_record.currentStripeName = stripe_record.stripeName
-    db_session.commit()
-    insert_promotions_table(student_record, belt_record, stripe_record, promotion_date_str, "Rank was updated")
-
+    try:
+        print(f'updating badge number:{student_record.badgeNumber} to {belt_record.beltId} / {belt_record.beltTitle}')
+        student_record.currentRankNum    = belt_record.beltId
+        student_record.currentRankName   = belt_record.beltTitle
+        student_record.currentStripeId   = stripe_record.stripeId
+        student_record.currentStripeName = stripe_record.stripeName
+        student_record.studentPromotionDate = promotion_date_str
+        db_session.commit()
+        insert_promotions_table(student_record, belt_record, stripe_record, promotion_date_str, "Rank was updated")
+    except Exception as ex:
+        traceback.print_exc()
+        print(str(ex))
+        raise ex
 
 def insert_promotions_table(student_record, belt_record, stripe_record, promotion_date_str, comments: str = "Promotion"):
     promotion_record = Promotions()

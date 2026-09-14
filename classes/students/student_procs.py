@@ -2,7 +2,7 @@ from flask import render_template
 
 from classes.image_procs import get_rms_default_image
 from classes.sqlite_procs import getDbSession
-from models import Students
+from models.models import Students
 
 # ------------------------------------------------------------------------------------------
 db_session = getDbSession()

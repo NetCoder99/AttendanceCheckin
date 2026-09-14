@@ -4,8 +4,6 @@ import platform
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from models import Base
-
 db_session = None
 #db_name    = 'AttendanceV3.db'
 

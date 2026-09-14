@@ -1,68 +1,98 @@
 import base64
 import io
+import logging
 import os
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from pathlib import Path
 from PIL import Image
 
 from flask import current_app, render_template, request
 from flask_htmx import make_response
 
-from classes.promotions_procs import GetNextPromotionDetails
+import constants
+from classes.promotions_procs import GetNextPromotionDetails, GetNextStudentRank, GetCrntStudentRank
 from classes.ranks_procs import show_student_ranks_func
 from classes.sqlite_procs import getDbSession
-from models import Classes, Attendance, Students, EligibilityCounts
+from classes.students.checkin_panel_procs import getCheckinPanel
+from models.models import Classes, Attendance, Students, EligibilityCounts
 from sqlalchemy import select, func, text
 
 # ------------------------------------------------------------------------------------------
+logger = logging.getLogger(__name__)
 db_session = getDbSession()
+# ------------------------------------------------------------------------------------------
 
 def CheckinMain():
     print(f'badge_checkin was invoked')
     try:
         badge_number = request.form['badgeNumber']
+        checkin_datetime = datetime.now()
 
         # check for valid badge format
-        if not badge_number: return getCheckinMessage("error", "Badge number can not be blank!")
-        if not badge_number.isdigit(): return getCheckinMessage("error", "Badge number must be all digits!")
+        if not badge_number:            return getCheckinMessage("error", "Badge number can not be blank!")
+        if not badge_number.isdigit():  return getCheckinMessage("error", "Badge number must be all digits!")
 
         # check the badge matches a student record
         student_record = db_session.query(Students).filter_by(badgeNumber=badge_number).first()
-        if not student_record: return getCheckinMessage("error", "Student record not found!")
+        if not student_record:          return getCheckinMessage("error", "Student record not found!")
+
+        if not student_record.currentRankNum or not student_record.studentPromotionDate:
+            return show_student_ranks_func()
+
 
         # check for multiple checkin actions, on a single day
         daily_checkin_count_stmt = (select(func.count())
-                               .select_from(Attendance)
-                               .where(Attendance.badgeNumber == student_record.badgeNumber)
-                               )
+            .select_from(Attendance)
+            .where(
+                Attendance.badgeNumber == student_record.badgeNumber,
+                Attendance.checkinDate == checkin_datetime.strftime(constants.fmtDate)
+            )
+        )
         daily_checkin_count = db_session.scalar(daily_checkin_count_stmt)
-        # if daily_checkin_count > 0: return getCheckinMessage("error", "Already checked in for today!")
-
 
         ## day of week in db starts with Sunday = 0, ends with Saturday = 6
         ## add 1 to adjust for that
-        day_of_week = datetime.now().date().weekday() + 1
-
-        # get the current class and insert the attendance record
-        selected_class = GetCurrentClass(day_of_week)
-        InsertAttendanceRecord(student_record, selected_class, day_of_week)
-
-        # if the student does not have a rank entry, display the select rank dialog
-        if not student_record.currentRankNum:
-            return show_student_ranks_func()
-
-        eligible_message = GetPromotionMessage(student_record)
+        day_of_week = checkin_datetime.date().weekday() + 1
 
         # save the image to static directory, let html fetch large files
         student_image_name = SaveStudentImage(student_record)
         student_image_url  = f"/static/images/{student_image_name}"
+
+        eligible_message = GetPromotionMessage(student_record)
+
+        if daily_checkin_count > 0:
+            return getCheckinPanel(
+                'error',
+                'is already checked in for today!',
+                student_image_url,
+                student_record,
+                GetCurrentClass(day_of_week),
+                promotion_message=eligible_message
+            )
+
+        # get the current class and insert the attendance record
+        selected_class = GetCurrentClass(day_of_week)
+        next_class     = GetNextClass(checkin_datetime)
+        if not selected_class:
+            return getCheckinPanel(
+                status   = 'error',
+                message  = 'was not checked in, no class available',
+                student_image_url = student_image_url,
+                student_record    = student_record,
+                other_message     = f'Next class is {next_class.className}',
+                promotion_message = eligible_message
+            )
+
+        InsertAttendanceRecord(student_record, selected_class, day_of_week)
+
+        # if the student does not have a rank entry, display the select rank dialog
         return getCheckinPanel(
-            'success',
-            'Checkin was completed',
-            student_image_url,
-            student_record,
-            selected_class,
-            promotion_message=eligible_message
+            status       = 'success',
+            message      =  'Checkin was completed',
+            student_image_url = student_image_url,
+            student_record    = student_record,
+            other_message     = f'Current class is {selected_class.className}',
+            promotion_message =eligible_message
         )
 
     except Exception as ex:
@@ -72,7 +102,6 @@ def CheckinMain():
 def GetPromotionMessage(student_record: Students) -> str:
     try:
         next_promotion_record = GetNextPromotionDetails(student_record)
-
 
         # get next promotion eligibility fields
         class_count_stmt = select(func.count()).where(Attendance.badgeNumber == student_record.badgeNumber)
@@ -115,7 +144,7 @@ order  by a.badgeNumber
 # --------------------------------------------------------------------
 # Search for a class within the start and stop times
 # --------------------------------------------------------------------
-def GetCurrentClass(day_of_week: int):
+def GetCurrentClass(day_of_week: int, before_interval:int = 15, after_interval:int = 15):
     #class_times = Classes.objects.filter(class_day_of_week=today).order_by('class_start_time')
     class_times = db_session.query(Classes).filter_by(classDayOfWeek=day_of_week)
 
@@ -123,13 +152,58 @@ def GetCurrentClass(day_of_week: int):
     current_date_str = current_date.strftime("%m/%d/%Y")
     date_format = "%m/%d/%Y %I:%M %p"
     for class_record in class_times:
-        checkin_start_str  = current_date_str + ' ' + class_record.classStartTime
-        checkin_start_date = datetime.strptime(checkin_start_str, date_format)
-        checkin_finis_str  = current_date_str + ' ' + class_record.classFinisTime
-        checkin_finis_date = datetime.strptime(checkin_finis_str, date_format)
-        if checkin_start_date <= current_date <= checkin_finis_date:
+        start_checkin_str  = current_date_str + ' ' + class_record.classStartTime
+        start_checkin_date = datetime.strptime(start_checkin_str, date_format)
+        finis_checkin_str  = current_date_str + ' ' + class_record.classFinisTime
+        finis_checkin_date = datetime.strptime(finis_checkin_str, date_format)
+
+        start_checkin_time = start_checkin_date - timedelta(minutes=before_interval)
+        finis_checkin_time = start_checkin_date + timedelta(minutes=after_interval)
+
+        DisplayClassDateTimes(start_checkin_time, finis_checkin_time, current_date)
+
+        if start_checkin_time <= current_date <= finis_checkin_time:
             return class_record
+
+        if start_checkin_date <= current_date <= finis_checkin_date:
+            return class_record
+
     return None
+
+
+def GetNextClass(checkin_datetime: datetime, before_interval: int = 15) -> Classes | None:
+    try:
+        day_of_week = checkin_datetime.date().weekday() + 1
+        class_times = db_session.query(Classes).filter_by(classDayOfWeek=day_of_week)
+        current_date_str = checkin_datetime.strftime("%m/%d/%Y")
+        date_format = "%m/%d/%Y %I:%M %p"
+        for class_record in class_times:
+            start_checkin_str  = current_date_str + ' ' + class_record.classStartTime
+            start_checkin_date = datetime.strptime(start_checkin_str, date_format)
+            start_checkin_time = start_checkin_date - timedelta(minutes=before_interval)
+            if start_checkin_time >= checkin_datetime:
+                return class_record
+        return None
+    except Exception as ex:
+        print(f'Error: {str(ex)}')
+        raise ex
+# --------------------------------------------------------------------
+# Insert the attendance checkin record
+# --------------------------------------------------------------------
+def DisplayClassDateTimes(start_datetime: date, finis_datetime: date, checkin_date: date = None):
+    if checkin_date:
+        logger.info(
+            f'{checkin_date.strftime(constants.dayNameAbbr)} - '
+            f'{start_datetime.strftime(constants.fmtDateTime3)} '
+            f'{finis_datetime.strftime(constants.fmtDateTime3)} '
+            f'{checkin_date.strftime(constants.fmtDateTime3)}'
+        )
+    else:
+        logger.info(
+            f'{checkin_date.strftime(constants.dayNameAbbr)} - '
+            f'{start_datetime.strftime(constants.fmtDateTime3)} '
+            f'{finis_datetime.strftime(constants.fmtDateTime3)} '
+        )
 
 # --------------------------------------------------------------------
 # Insert the attendance checkin record
@@ -202,42 +276,6 @@ def getCheckinMessage(status, message):
     return response
 
 # --------------------------------------------------------------------
-def getCheckinPanel(
-        status,
-        message,
-        student_image_url,
-        student_record: Students,
-        selected_class: Classes,
-        promotion_message: str
-):
-    try:
-        alert_class    = "text-danger" #  if status == 'error' else ""
-        if selected_class:
-            badge_message  = f'{student_record.firstName} {student_record.lastName} checked in to {selected_class.className}'
-        else:
-            badge_message  = f'{student_record.firstName} {student_record.lastName} not checked in, no class at this time.'
-
-        #class_message  = f'Checked in to {selected_class.className}'
-
-        badge_message = render_template(
-            "partials/checkin_response_panel.html",
-            alert_class       = alert_class,
-            badge_message_str = message,
-            checkinMessage    = badge_message,
-            promotionMessage  = promotion_message,
-            otherMessage      = '',   #"Other message content",
-            image_srce_url    = student_image_url
-        )
-        response = make_response(badge_message)
-        response.headers['HX-Retarget'] = '#checkin_response_panel'  # CSS Selector
-        response.headers['HX-Swap']     = 'innerHTML'
-        response.headers['HX-Trigger-After-Settle'] = 'checkin_panel'
-        return response
-    except Exception as ex:
-        print(str(ex))
-        raise ex
-
-# --------------------------------------------------------------------
 def getCheckinError(status, message):
     alert_class = "text-danger" if status == 'error' else "text-success"
     badge_message = render_template(
@@ -249,3 +287,4 @@ def getCheckinError(status, message):
     response.headers['HX-Retarget'] = '#badgeMessage'  # CSS Selector
     response.headers['HX-Trigger-After-Settle'] = 'checkin_error'
     return response
+

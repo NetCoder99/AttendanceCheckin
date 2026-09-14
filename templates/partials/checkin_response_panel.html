@@ -14,7 +14,7 @@
     </div>
     <!-- This column contains nested rows -->
     <div class="col-md-9">
-      <div class="fw-bold fs-5" id="checkinMessage"   >{{checkinMessage | default('checkinMessage')|safe}}</div>
+      <div class="fw-bold fs-5 {{alert_class}}" id="checkinMessage"   >{{checkinMessage | default('checkinMessage')|safe}}</div>
       <div class="fw-bold fs-5" id="promotionMessage" >{{promotionMessage| default('promotionMessage')|safe}}</div>
       <div class="fw-bold fs-5" id="otherMessage"     >{{otherMessage| default('otherMessage')|safe}}</div>
       <div class="" id="timerCountDown" >
