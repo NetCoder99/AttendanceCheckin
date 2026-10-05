@@ -106,7 +106,7 @@ function resetCheckinResponseMessages() {
     document.getElementById('checkinMessage').innerHTML   = "&nbsp";
     document.getElementById('promotionMessage').innerHTML = "&nbsp";
     document.getElementById('otherMessage').innerHTML     = "&nbsp";
-    document.getElementById('checkin_img_student').src = "/static/images/RSM_Logo_002.jpg"
+    document.getElementById('checkin_img_student').src = "/static/images/rising-sun-patch.png"
 
     document.getElementById('checkinTimer1').classList.remove("invisible");
     document.getElementById('checkinTimer2').classList.remove("invisible");

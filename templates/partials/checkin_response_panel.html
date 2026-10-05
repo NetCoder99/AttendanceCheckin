@@ -7,16 +7,16 @@
     <div class="col-md-3">
     <img id="checkin_img_student"
          name="checkin_img_student"
-         src="{{image_srce_url | default('/static/images/RSM_Logo_002.jpg')}}"
+         src="{{image_srce_url | default('/static/images/rising-sun-patch.png')}}"
          alt="Student Image"
          class="banner object-center"
          height="125"/>
     </div>
     <!-- This column contains nested rows -->
     <div class="col-md-9">
-      <div class="fw-bold fs-5 {{alert_class}}" id="checkinMessage"   >{{checkinMessage | default('checkinMessage')|safe}}</div>
-      <div class="fw-bold fs-5" id="promotionMessage" >{{promotionMessage| default('promotionMessage')|safe}}</div>
-      <div class="fw-bold fs-5" id="otherMessage"     >{{otherMessage| default('otherMessage')|safe}}</div>
+      <div class="fw-bold fs-4 {{alert_class}}" id="checkinMessage"   >{{checkinMessage | default('checkinMessage')|safe}}</div>
+      <div class="fw-bold fs-4" id="otherMessage"     >{{otherMessage| default('otherMessage')|safe}}</div>
+      <div class="fw-bold fs-4" id="promotionMessage" >{{promotionMessage| default('promotionMessage')|safe}}</div>
       <div class="" id="timerCountDown" >
         <span id="checkinTimer5" class="me-2 text-warning fw-bold ">5</span>
         <span id="checkinTimer4" class="me-2 text-warning fw-bold">4</span>
