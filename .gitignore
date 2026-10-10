@@ -1,5 +1,6 @@
 # App specific
 static/images/badges/*
+static/images/students/*
 !static/images/badges/.gitkeep
 
 badgeData/*

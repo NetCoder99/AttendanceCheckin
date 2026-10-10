@@ -44,7 +44,7 @@ def get_stripes():
     try:
         return get_stripes_func()
     except Exception as ex:
-        print(str(ex))
+        logger.exception(ex)
         return getRanksMessage('error', str(ex))
 
 # --------------------------------------------------------------------
@@ -56,7 +56,7 @@ def show_student_ranks_modal():
     try:
         return show_student_ranks_func()
     except Exception as ex:
-        print(str(ex))
+        logger.exception(ex)
         return getBadgeMessage('error', str(ex))
 
 # --------------------------------------------------------------------
@@ -66,7 +66,7 @@ def update_required_rank():
     try:
         return update_required_rank_func()
     except Exception as ex:
-        print(str(ex))
+        logger.exception(ex)
         return getRanksMessage('error', str(ex))
 
 # --------------------------------------------------------------------
@@ -78,7 +78,7 @@ def badge_checkin():
     try:
         return CheckinMain()
     except Exception as ex:
-        print(str(ex))
+        logger.exception(ex)
         return getCheckinMessage('error', str(ex))
 
 if __name__ == '__main__':
@@ -92,5 +92,5 @@ if __name__ == '__main__':
         root = tk.Tk()
         root.withdraw()
         messagebox.showinfo("AttendanceCheckin - Error", ok_to_start['message'])
-        print(ok_to_start['message'])
+        logger.info(ok_to_start['message'])
     #app.run(debug=False,  port=5002)

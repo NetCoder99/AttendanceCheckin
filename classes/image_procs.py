@@ -1,8 +1,11 @@
 import base64
 import os
+import logging
 
 from io import BytesIO
 from PIL import Image
+
+logger = logging.getLogger(__name__)
 
 def get_images_path():
     return os.path.join(os.getcwd(), 'static', 'images')
@@ -21,13 +24,20 @@ def pillow_image_to_base64(img):
     img_base64  = base64.b64encode(img_bytes)
     return img_base64.decode('utf-8')
 
+def correctImageOrientationBase64(inpImageBase64, imageFormat):
+    if "," in inpImageBase64:
+        tmpImageBase64 = inpImageBase64.split(",")[1]
+    else:
+        tmpImageBase64 = inpImageBase64
+    tmpImageBytes = BytesIO(base64.b64decode(tmpImageBase64))
 
-def correctImageOrientation(imagePath):
-    oldFilePath = os.path.split(imagePath)[0]
-    newFilePath = os.path.join(oldFilePath, "studentImage.jpg")
+    # oldFilePath = os.path.split(imagePath)[0]
+    # newFilePath = os.path.join(oldFilePath, "studentImage.jpg")
     try:
-        with Image.open(imagePath) as img:
+        with Image.open(tmpImageBytes) as img:
             exif = img.getexif()
+            if imageFormat is None:
+                imageFormat = img.format
             orientation = exif.get(0x0112, 1)
             if orientation == 3:
                 img = img.rotate(180, expand=True)
@@ -35,13 +45,41 @@ def correctImageOrientation(imagePath):
                 img = img.rotate(270, expand=True)
             elif orientation == 8:
                 img = img.rotate(90, expand=True)
-            img.save(newFilePath)
+            # img.save(newFilePath)
             max_size = (300, 300)
             img.thumbnail(max_size, Image.Resampling.LANCZOS)
+
+            buffered = BytesIO()
+            img.save(buffered, format=imageFormat)
             img.close()
+            img = None
+
+            newImageDecode = base64.b64encode(buffered.getvalue()).decode('utf-8')
+            return newImageDecode
     except Exception as e:
-        print(f"Error processing image {imagePath}: {e}")
-    return newFilePath
+        logger.exception(e)
+        raise e
+
+# def correctImageOrientation(imagePath):
+#     oldFilePath = os.path.split(imagePath)[0]
+#     newFilePath = os.path.join(oldFilePath, "studentImage.jpg")
+#     try:
+#         with Image.open(imagePath) as img:
+#             exif = img.getexif()
+#             orientation = exif.get(0x0112, 1)
+#             if orientation == 3:
+#                 img = img.rotate(180, expand=True)
+#             elif orientation == 6:
+#                 img = img.rotate(270, expand=True)
+#             elif orientation == 8:
+#                 img = img.rotate(90, expand=True)
+#             img.save(newFilePath)
+#             max_size = (300, 300)
+#             img.thumbnail(max_size, Image.Resampling.LANCZOS)
+#             img.close()
+#     except Exception as e:
+#         print(f"Error processing image {imagePath}: {e}")
+#     return newFilePath
 
 def showImageProperties(imagePath):
     img = Image.open(imagePath)

@@ -24,9 +24,18 @@ LOGGING_CONFIG = {
             "mode": "a",
             "encoding": "utf-8",
         },
+        "rotating": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "level": "DEBUG",
+            "formatter": "detailed",
+            "filename": f'{constants.applicationName}.log',
+            "maxBytes": 10485760,
+            "backupCount": 5,
+            "encoding": "utf8"
+        },
     },
     "root": {
         "level": "DEBUG",
-        "handlers": ["console"],
+        "handlers": ["console", "rotating"],
     },
 }

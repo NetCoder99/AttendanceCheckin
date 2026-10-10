@@ -10,6 +10,8 @@ from flask import current_app, render_template, request
 from flask_htmx import make_response
 
 import constants
+from classes.image_procs import correctImageOrientationBase64
+# from classes.image_procs import correctImageOrientationBase64
 from classes.promotions_procs import GetNextPromotionDetails, GetNextStudentRank, GetCrntStudentRank
 from classes.ranks_procs import show_student_ranks_func
 from classes.sqlite_procs import getDbSession
@@ -56,7 +58,7 @@ def CheckinMain():
 
         # save the image to static directory, let html fetch large files
         student_image_name = SaveStudentImage(student_record)
-        student_image_url  = f"/static/images/{student_image_name}"
+        student_image_url  = f"/static/images/students/{student_image_name}"
 
         eligible_message = GetPromotionMessage(student_record)
 
@@ -71,15 +73,16 @@ def CheckinMain():
             )
 
         # get the current class and insert the attendance record
-        selected_class = GetCurrentClass(day_of_week)
-        next_class     = GetNextClass(checkin_datetime)
+        selected_class  = GetCurrentClass(day_of_week)
+        next_class      = GetNextClass(checkin_datetime)
+        next_class_name = next_class.className if next_class else 'Unknown'
         if not selected_class:
             return getCheckinPanel(
                 status   = 'error',
                 message  = 'was not checked in, no class available',
                 student_image_url = student_image_url,
                 student_record    = student_record,
-                other_message     = f'Next class is {next_class.className}',
+                other_message     = f'Next class is {next_class_name}',
                 promotion_message = eligible_message
             )
 
@@ -96,7 +99,7 @@ def CheckinMain():
         )
 
     except Exception as ex:
-        print(str(ex))
+        logger.exception(ex)
         return getCheckinMessage('error', str(ex))
 
 def GetPromotionMessage(student_record: Students) -> str:
@@ -123,7 +126,7 @@ def GetPromotionMessage(student_record: Students) -> str:
         eligible_message = next_promotion_record.promotion_message
         return eligible_message
     except Exception as ex:
-        print(f'Error: {str(ex)}')
+        logger.exception(ex)
 
 def GetEligibilityCountsQuery() -> text:
     return text('''
@@ -185,7 +188,7 @@ def GetNextClass(checkin_datetime: datetime, before_interval: int = 15) -> Class
                 return class_record
         return None
     except Exception as ex:
-        print(f'Error: {str(ex)}')
+        logger.exception(ex)
         raise ex
 # --------------------------------------------------------------------
 # Insert the attendance checkin record
@@ -246,18 +249,24 @@ def SaveStudentImage(student_record: Students):
             return 'RSM_Logo_002.jpg'
 
         image_name   = student_record.studentImageName.split('.')[0] + '.webp'
-        output_path  = os.path.join(current_app.root_path, 'static', 'images', image_name)
+        output_path  = os.path.join(current_app.root_path, 'static', 'images', 'students', image_name)
         file_path = Path(output_path)
         if file_path.exists():
+            image_data     = student_record.studentImageBase64
+            newImageBase64 = correctImageOrientationBase64(image_data, student_record.studentImageType)
+            tmpImageBytes  = io.BytesIO(base64.b64decode(newImageBase64))
+            image          = Image.open(tmpImageBytes)
+            quality        = '80'
+            image.save(output_path, 'WEBP', quality=quality)
             return image_name
         else:
-            image_data = base64.b64decode(student_record.studentImageBase64)
+            image_data     = base64.b64decode(student_record.studentImageBase64)
             image = Image.open(io.BytesIO(image_data))
             quality      = '80'
             image.save(output_path, 'WEBP', quality=quality)
             return image_name
     except Exception as e:
-        print(f"Error decoding base64: {str(e)}. Check for valid Base64 characters and padding.")
+        logger.exception(f"Error decoding base64: {str(e)}. Check for valid Base64 characters and padding.")
         raise e
 
 # --------------------------------------------------------------------
